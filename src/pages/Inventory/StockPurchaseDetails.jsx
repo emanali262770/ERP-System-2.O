@@ -8,7 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Download, Package, Warehouse, AlertTriangle, TrendingUp, MapPin, Edit, Trash2, Eye, MoreVertical, RefreshCw, Store } from "lucide-react";
 import { toast } from "sonner";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 const mockStockData = [
   {
     id: 1,
@@ -109,8 +115,8 @@ const StockPurchaseDetails = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleDownload}
               className="border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 shadow-sm"
             >
@@ -134,21 +140,19 @@ const StockPurchaseDetails = () => {
                 <div className="space-y-6 pt-4">
                   {/* Item Code & Name */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Item Code</Label>
-                      <Input 
-                        placeholder="e.g., ITM001" 
-                        disabled 
-                        className="bg-muted/50 border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                      />
-                    </div>
+
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Item Name</Label>
-                      <Input 
-                        placeholder="Select product" 
-                        disabled 
-                        className="bg-muted/50 border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                      />
+                      <Select>
+                        <SelectTrigger className="bg-muted/50 border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                          <SelectValue placeholder="Select product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="item1">Item 1</SelectItem>
+                          <SelectItem value="item2">Item 2</SelectItem>
+                          <SelectItem value="item3">Item 3</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -159,47 +163,60 @@ const StockPurchaseDetails = () => {
                         <Package className="w-4 h-4" />
                         Opening Stock Quantity
                       </Label>
-                      <Input 
-                        type="number" 
-                        placeholder="0" 
+                      <Input
+                        type="number"
+                        placeholder="0"
                         className="border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                         <Warehouse className="w-4 h-4" />
-                        Stock Location / Stores in Consignment
+                        Stores in Consignment
                       </Label>
-                      <Input 
-                        placeholder="e.g., Main Warehouse" 
-                        className="border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                      />
+                      <Select>
+                        <SelectTrigger className="bg-muted/50 border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                          <SelectValue placeholder="Select stock location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="main-warehouse" className="hover:bg-blue-500 hover:text-white">
+                            Main Warehouse
+                          </SelectItem>
+                          <SelectItem value="secondary-warehouse" className="hover:bg-blue-500 hover:text-white">
+                            Secondary Warehouse
+                          </SelectItem>
+                          <SelectItem value="consignment-store" className="hover:bg-blue-500 hover:text-white">
+                            Consignment Store
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
+
                   </div>
 
                   {/* Pricing */}
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Purchase Rate (excl. VAT)</Label>
-                      <Input 
-                        type="number" 
-                        placeholder="0.00" 
+                      <Input
+                        type="number"
+                        placeholder="0.00"
                         className="border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Selling / Retail Price</Label>
-                      <Input 
-                        type="number" 
-                        placeholder="0.00" 
+                      <Input
+                        type="number"
+                        placeholder="0.00"
                         className="border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">Wholesale Price (Optional)</Label>
-                      <Input 
-                        type="number" 
-                        placeholder="0.00" 
+                      <Input
+                        type="number"
+                        placeholder="0.00"
                         className="border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
                     </div>
@@ -211,14 +228,14 @@ const StockPurchaseDetails = () => {
                       <AlertTriangle className="w-4 h-4" />
                       Minimum Stock Level (Alert Trigger)
                     </Label>
-                    <Input 
-                      type="number" 
-                      placeholder="0" 
+                    <Input
+                      type="number"
+                      placeholder="0"
                       className="border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                     />
                   </div>
 
-                  <Button 
+                  <Button
                     className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 py-3 text-base font-medium"
                     onClick={handleSaveStock}
                   >
@@ -245,7 +262,7 @@ const StockPurchaseDetails = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -261,7 +278,7 @@ const StockPurchaseDetails = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -277,7 +294,7 @@ const StockPurchaseDetails = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -341,8 +358,8 @@ const StockPurchaseDetails = () => {
                 </thead>
                 <tbody className="divide-y divide-border/30">
                   {filteredStock.map((item, index) => (
-                    <tr 
-                      key={item.id} 
+                    <tr
+                      key={item.id}
                       className="group hover:bg-primary/5 transition-all duration-300 ease-in-out transform hover:scale-[1.002]"
                     >
                       <td className="px-6 py-4">
@@ -357,13 +374,12 @@ const StockPurchaseDetails = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <span className={`font-bold text-lg ${
-                            getStockStatus(item.openingStock, item.minStockLevel) === "critical" 
-                              ? "text-red-600" 
-                              : getStockStatus(item.openingStock, item.minStockLevel) === "warning"
+                          <span className={`font-bold text-lg ${getStockStatus(item.openingStock, item.minStockLevel) === "critical"
+                            ? "text-red-600"
+                            : getStockStatus(item.openingStock, item.minStockLevel) === "warning"
                               ? "text-amber-600"
                               : "text-green-600"
-                          }`}>
+                            }`}>
                             {item.openingStock}
                           </span>
                           {getStockStatus(item.openingStock, item.minStockLevel) === "critical" && (
@@ -393,8 +409,8 @@ const StockPurchaseDetails = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={`${getLocationColor(item.location)} border-2 font-medium text-xs px-2 py-1 rounded-full flex items-center gap-1`}
                         >
                           <MapPin className="w-3 h-3" />
@@ -402,11 +418,10 @@ const StockPurchaseDetails = () => {
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
-                        <div className={`font-bold ${
-                          item.openingStock <= item.minStockLevel
-                            ? "text-red-600 bg-red-50 border-red-200"
-                            : "text-green-600 bg-green-50 border-green-200"
-                        } px-3 py-1 rounded-full text-sm border inline-block`}>
+                        <div className={`font-bold ${item.openingStock <= item.minStockLevel
+                          ? "text-red-600 bg-red-50 border-red-200"
+                          : "text-green-600 bg-green-50 border-green-200"
+                          } px-3 py-1 rounded-full text-sm border inline-block`}>
                           {item.minStockLevel}
                         </div>
                       </td>
@@ -450,14 +465,14 @@ const StockPurchaseDetails = () => {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                         
+
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              
+
               {filteredStock.length === 0 && (
                 <div className="text-center py-12">
                   <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
