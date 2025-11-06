@@ -13,7 +13,8 @@ import Barcode from "./pages/Barcode";
 import Communication from "./pages/Communication";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
-
+import WareHouse from "./pages/Inventory/WareHouse";
+import Signup from "./pages/SignUpPage";
 // Direct Inventory Pages (No Sidebar or Layout)
 import ProductInfo from "./pages/Inventory/ProductInfo";
 import StockPurchaseDetails from "./pages/Inventory/StockPurchaseDetails";
@@ -43,7 +44,8 @@ const App = () => (
           {/* Inventory Pages – Direct, No Sidebar */}
           <Route path="/inventory/productinfo" element={<ProductInfo />} />
           <Route path="/inventory/stock-purchase" element={<StockPurchaseDetails />} />
-
+          <Route path="/inventory/warehouse" element={<WareHouse />} />
+          <Route path="/signup" element={<Signup />} />
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
