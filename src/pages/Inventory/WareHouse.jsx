@@ -33,7 +33,7 @@ const mockWarehouseData = [
       email: "ahmed.khan@company.com",
     },
     itemsInStock: 1250,
-    totalPurchaseValue: 2450000,
+    PurchaseValue: 2450000,
   },
   {
     id: 2,
@@ -45,7 +45,7 @@ const mockWarehouseData = [
       email: "saba.ali@company.com",
     },
     itemsInStock: 890,
-    totalPurchaseValue: 1780000,
+    PurchaseValue: 1780000,
   },
   {
     id: 3,
@@ -57,7 +57,7 @@ const mockWarehouseData = [
       email: "omar@company.com",
     },
     itemsInStock: 620,
-    totalPurchaseValue: 3120000,
+    PurchaseValue: 3120000,
   },
 ];
 
@@ -70,7 +70,7 @@ const WareHouse = () => {
     warehouse.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
     warehouse.incharge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     warehouse.itemsInStock.toString().includes(searchTerm) ||
-    warehouse.totalPurchaseValue.toString().includes(searchTerm)
+    warehouse.PurchaseValue.toString().includes(searchTerm)
   );
 
   const handleDownload = () => {
@@ -94,7 +94,7 @@ const WareHouse = () => {
     toast.info(`Viewing warehouse details #${id}`);
   };
 
-  const totalStockValue = mockWarehouseData.reduce((sum, w) => sum + w.totalPurchaseValue, 0);
+  const totalStockValue = mockWarehouseData.reduce((sum, w) => sum + w.PurchaseValue, 0);
 
   return (
     <DashboardLayout>
@@ -308,7 +308,7 @@ const WareHouse = () => {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Address</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Incharge</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Items in Stock</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Total Purchase Value</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider"> Value</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -366,7 +366,7 @@ const WareHouse = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-medium text-foreground">
-                          PKR {warehouse.totalPurchaseValue.toLocaleString()}
+                          PKR {warehouse.PurchaseValue.toLocaleString()}
                         </div>
                       </td>
                       <td className="px-6 py-4">
