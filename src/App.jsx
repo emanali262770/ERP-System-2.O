@@ -27,6 +27,7 @@ import ManageCompanies from "./pages/CompanyManagement/ManageCompanies";
 import CompanySwitcher from "./pages/CompanyManagement/CompanySwitcher";
 import CreateCompanyForm from "./pages/CompanyManagement/CreateCompanyForm";
 import RoleAccessSettings from "./pages/CompanyManagement/RoleAccessSettings";
+import Invoice from "./pages/Inventory/Invoice";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/inventory/supplier-information" element={<SupplierInformation />} />
           <Route path="/inventory/sales-history" element={<SalesHistory />} />
           <Route path="/inventory/transaction-traking" element={<TransactionTracking />} />
+          <Route path="/inventory/invoice" element={<Invoice />} />
 
           {/* Company Management Pages */}
           <Route path="/company-management/manage-companies" element={<ManageCompanies />} />
