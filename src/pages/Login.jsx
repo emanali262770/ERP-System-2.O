@@ -1,33 +1,60 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Lock, Eye, EyeOff, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import api from "../Api/AxiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth(); 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+ const handleLogin = async (e) => {
+  e.preventDefault();
+
+  if (!email.trim()) {
+    toast.error("Please enter your email");
+    return;
+  }
+
+  if (!password.trim()) {
+    toast.error("Please enter your password");
+    return;
+  }
+
+  try {
     setLoading(true);
 
-    setTimeout(() => {
-      if (email && password) {
-        toast.success("Login successful!");
-        navigate("/company-selection");
-      } else {
-        toast.error("Please fill in all fields");
-      }
-      setLoading(false);
-    }, 1000);
-  };
+    const res = await api.post("/auth/login", { email, password });
+
+    if (res?.data?.token) {
+      toast.success("Login successful!");
+
+      // ✅ Save user info + token in localStorage via AuthContext
+      login(res.data.user, res.data.token);
+      // ✅ Redirect after a short delay
+      setTimeout(() => navigate("/company-selection"), 1000);
+    } else {
+      toast.error(res.data?.message || "Invalid credentials");
+    }
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+        "Something went wrong while logging in"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
@@ -48,16 +75,17 @@ const Login = () => {
           <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
             Welcome Back
           </CardTitle>
-          <p className="text-gray-600 text-lg">
-            Sign in to your account
-          </p>
+          <p className="text-gray-600 text-lg">Sign in to your account</p>
         </CardHeader>
 
         <CardContent className="px-8 pb-8">
           <form onSubmit={handleLogin} className="space-y-6">
             {/* Email Field */}
             <div className="space-y-3">
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="email"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Email Address
               </Label>
               <div className="relative">
@@ -78,7 +106,10 @@ const Login = () => {
 
             {/* Password Field */}
             <div className="space-y-3">
-              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="password"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Password
               </Label>
               <div className="relative">
@@ -108,24 +139,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Remember me and Forgot password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
-                </label>
-              </div>
-
-              <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200">
-                Forgot password?
-              </a>
-            </div>
+            
 
             {/* Submit Button */}
             <Button
@@ -147,12 +161,12 @@ const Login = () => {
             <div className="text-center pt-4">
               <p className="text-gray-600">
                 Don't have an account?{" "}
-                <a
-                  href="/signup"
+                <Link
+                  to="/signup"
                   className="font-semibold text-blue-600 hover:text-blue-500 transition-colors duration-200"
                 >
                   Sign up
-                </a>
+                </Link>
               </p>
             </div>
           </form>
@@ -161,10 +175,18 @@ const Login = () => {
 
       <style jsx>{`
         @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;

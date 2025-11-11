@@ -30,6 +30,7 @@ import CompanySwitcher from "./pages/CompanyManagement/CompanySwitcher";
 import CreateCompanyForm from "./pages/CompanyManagement/CreateCompanyForm";
 import RoleAccessSettings from "./pages/CompanyManagement/RoleAccessSettings";
 import Invoice from "./pages/Inventory/Invoice";
+import ProtectedRoute from "./context/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -43,10 +44,10 @@ const App = () => (
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/company-selection" element={<CompanySelection />} />
+          <Route path="/company-selection" element={<ProtectedRoute><CompanySelection /></ProtectedRoute>} />
 
           {/* Protected Routes (All use DashboardLayout inside their page) */}
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/consignment" element={<Consignment />} />
           <Route path="/barcode" element={<Barcode />} />

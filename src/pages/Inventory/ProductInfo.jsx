@@ -1,56 +1,149 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Download, Upload, X, Package, ImageIcon, Barcode, Edit, Trash2, Eye, MoreVertical } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Download,
+  Upload,
+  X,
+  Package,
+  ImageIcon,
+  Barcode,
+  Edit,
+  Trash2,
+  Eye,
+  Loader,
+} from "lucide-react";
 import { toast } from "sonner";
-
-const mockProducts = [
-  {
-    id: 1,
-    itemCode: "ITM001",
-    itemName: "Wireless Mouse",
-    description: "Ergonomic wireless mouse with 1600 DPI",
-    category: "Electronics/Peripherals",
-    unit: "PCS",
-    barcode: "8901234567890",
-    image: null,
-  },
-  {
-    id: 2,
-    itemCode: "ITM002",
-    itemName: "Cotton T-Shirt",
-    description: "100% cotton, medium size, black color",
-    category: "Clothing/Men",
-    unit: "PCS",
-    barcode: "8900987654321",
-    image: null,
-  },
-  {
-    id: 3,
-    itemCode: "ITM003",
-    itemName: "Basmati Rice",
-    description: "Premium long-grain basmati rice, 5kg pack",
-    category: "Food/Grains",
-    unit: "KG",
-    barcode: null,
-    image: null,
-  },
-];
+import api from "../../Api/AxiosInstance";
+import { useAuth } from "../../context/AuthContext";
+import ProductViewModal from "./Models/ProductViewModal";
+import Pagination from "../../components/Pagination";
 
 const ProductInfo = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editProductId, setEditProductId] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [itemCode, setItemCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const { token } = useAuth();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const filteredProducts = mockProducts.filter((item) =>
-    item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.itemCode.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch product table list
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const res = await api.get("/inventory/items", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.data?.success) {
+        const formatted = res.data.data.map((item, i) => ({
+          id: item._id,
+          itemCode: item.itemCode || "-",
+          itemName: item.itemName || "-",
+          description: item.description || "-",
+          category: item.category || "-",
+          unit: item.unitOfMeasure || "-",
+          barcode: item.barcode || "-", // ✅ fallback
+          image: item.itemImage?.url || null,
+        }));
+
+        setProducts(formatted);
+      } else {
+        toast.error("Failed to fetch items");
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Error fetching items from server");
+    } finally {
+      setTimeout(() => setLoading(false), 1000);
+    }
+  };
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // category list
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoryLoading(true);
+        const res = await api.get("/categories", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data?.success) {
+          setCategories(res.data.data);
+        } else {
+          toast.error("Failed to fetch categories");
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        toast.error("Error fetching categories");
+      } finally {
+        setTimeout(() => setCategoryLoading(false), 500);
+      }
+    };
+
+    if (isAddOpen) {
+      fetchCategories();
+    }
+  }, [isAddOpen]);
+
+  // Auto-generate item code based on highest existing number
+  useEffect(() => {
+    // 🧠 Only generate new code in Add mode
+    if (!isEditMode) {
+      if (products.length > 0) {
+        const maxNo = Math.max(
+          ...products.map((p) => {
+            const match = p.itemCode?.match(/ITM-(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          })
+        );
+        setItemCode(`ITM-${(maxNo + 1).toString().padStart(3, "0")}`);
+      } else {
+        setItemCode("ITM-001");
+      }
+    }
+  }, [products, isAddOpen, isEditMode]);
+
+  const filteredProducts = products.filter(
+    (item) =>
+      item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.itemCode.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Customize popup
@@ -83,7 +176,6 @@ const ProductInfo = () => {
     toast.success("Display settings updated!");
   };
 
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -99,29 +191,153 @@ const ProductInfo = () => {
   const handleRemoveImage = () => {
     setImagePreview(null);
     setSelectedFile(null);
+
+    // 🔥 Reset file input so re-upload works
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = "";
   };
 
   const handleDownload = () => {
     toast.success("Product catalog downloaded!");
   };
 
-  const handleAddProduct = () => {
-    toast.success("Product added successfully!");
-    setIsAddOpen(false);
-    setImagePreview(null);
-    setSelectedFile(null);
+  const handleAddProduct = async () => {
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+      if (selectedFile) formData.append("itemImage", selectedFile);
+      formData.append("itemCode", itemCode);
+      formData.append(
+        "itemName",
+        document.querySelector('input[placeholder="Product title"]').value
+      );
+      formData.append("category", selectedCategory);
+      formData.append(
+        "unitOfMeasure",
+        document.querySelector('input[placeholder="PCS, KG, Liter, etc."]')
+          .value
+      );
+      formData.append("description", document.querySelector("textarea").value);
+
+      let res;
+
+      if (isEditMode && editProductId) {
+        // ✏️ EDIT MODE
+        res = await api.put(`/inventory/items/${editProductId}`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else {
+        // 🆕 ADD MODE
+        res = await api.post("/inventory/items", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+      fetchProducts();
+      if (res.data?.success) {
+        toast.success(
+          isEditMode
+            ? "Product updated successfully!"
+            : "Product added successfully!"
+        );
+        setIsAddOpen(false);
+        setImagePreview(null);
+        setSelectedFile(null);
+        setIsEditMode(false);
+        setEditProductId(null);
+      } else {
+        toast.error(res.data?.message || "Operation failed");
+      }
+    } catch (error) {
+      console.error("Error submitting product:", error);
+      toast.error(error.response?.data?.message || "Server error");
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+    }
   };
 
   const handleEdit = (productId) => {
-    toast.success(`Editing product ${productId}`);
+    // find product to edit
+    const productToEdit = products.find((p) => p.id === productId);
+    // console.log(productToEdit);
+    if (!productToEdit) {
+      toast.error("Product not found");
+      return;
+    }
+
+    // enable edit mode + open modal
+    setIsEditMode(true);
+    setEditProductId(productId);
+    setIsAddOpen(true);
+
+    // pre-fill all fields
+    setSelectedCategory(productToEdit.category || "");
+    setImagePreview(productToEdit.image || null);
+    setItemCode(productToEdit.itemCode || "");
+
+    // update form inputs manually
+    setTimeout(() => {
+      const nameInput = document.querySelector(
+        'input[placeholder="Product title"]'
+      );
+      const descTextarea = document.querySelector("textarea");
+      const unitInput = document.querySelector(
+        'input[placeholder="PCS, KG, Liter, etc."]'
+      );
+
+      if (nameInput) nameInput.value = productToEdit.itemName || "";
+      if (descTextarea) descTextarea.value = productToEdit.description || "";
+      if (unitInput) unitInput.value = productToEdit.unit || "";
+    }, 50);
   };
 
-  const handleDelete = (productId) => {
-    toast.error(`Deleting product ${productId}`);
+  const handleDelete = async (productId) => {
+    // console.log(productId);
+
+    try {
+      setLoading(true);
+      toast.loading("Deleting product...");
+      const res = await api.delete(`/inventory/items/${productId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.dismiss(); // remove loader
+
+      if (res.data?.success) {
+        toast.success("Product deleted successfully!");
+        fetchProducts(); // refresh table
+      } else {
+        toast.error(res.data?.message || "Failed to delete product");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error deleting product:", error);
+      toast.error(
+        error.response?.data?.message || "Server error while deleting"
+      );
+    } finally {
+      setTimeout(() => setLoading(false), 500);
+    }
   };
 
   const handleView = (productId) => {
-    toast.info(`Viewing product ${productId}`);
+    const product = products.find((p) => p.id === productId);
+    if (!product) {
+      toast.error("Product not found!");
+      return;
+    }
+    setSelectedProduct(product);
+    setIsViewOpen(true);
   };
 
   const getCategoryColor = (category) => {
@@ -132,7 +348,11 @@ const ProductInfo = () => {
     };
     return categoryMap[category] || "bg-gray-50 text-gray-700 border-gray-200";
   };
-
+  // console.log({filteredProducts});
+  // --- Calculate paginated data ---
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -157,31 +377,47 @@ const ProductInfo = () => {
               Export
             </Button>
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <DialogTrigger asChild>
+              <DialogTrigger
+                asChild
+                onClick={() => {
+                  // 🧠 Reset previous edit mode when adding new product
+                  setIsEditMode(false);
+                  setEditProductId(null);
+                  setImagePreview(null);
+                  setSelectedFile(null);
+                  setSelectedCategory("");
+                }}
+              >
                 <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Product
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+
+              <DialogContent className="max-w-2xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
                 <DialogHeader className="border-b border-border/50 pb-4">
                   <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
                     <Plus className="w-5 h-5 text-primary" />
-                    Add New Product
+                    {isEditMode ? "Update Product" : "Add New Product"}
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 pt-4">
                   {/* Item Code & Name */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Item Code *</Label>
+                      <Label className="text-sm font-medium text-foreground">
+                        Item Code *
+                      </Label>
                       <Input
-                        placeholder="e.g., ITM001"
-                        className="focus:ring-2 focus:ring-primary/20 border-2 transition-all duration-200"
+                        value={itemCode}
+                        readOnly
+                        className="focus:ring-2 focus:ring-primary/20 border-2 transition-all duration-200 bg-gray-100 cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Item Name *</Label>
+                      <Label className="text-sm font-medium text-foreground">
+                        Item Name *
+                      </Label>
                       <Input
                         placeholder="Product title"
                         className="focus:ring-2 focus:ring-primary/20 border-2 transition-all duration-200"
@@ -191,7 +427,9 @@ const ProductInfo = () => {
 
                   {/* Description */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground">Description</Label>
+                    <Label className="text-sm font-medium text-foreground">
+                      Description
+                    </Label>
                     <textarea
                       className="w-full min-h-24 px-3 py-3 text-sm rounded-lg border-2 border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-200 resize-none"
                       placeholder="Full product description..."
@@ -201,14 +439,59 @@ const ProductInfo = () => {
                   {/* Category & Unit */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Category</Label>
-                      <Input
-                        placeholder="e.g., Electronics/Peripherals"
-                        className="focus:ring-2 focus:ring-primary/20 border-2 transition-all duration-200"
-                      />
+                      <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        Category <span className="text-red-500">*</span>
+                      </Label>
+
+                      {categoryLoading ? (
+                        <div className="flex justify-center items-center h-12 border rounded-lg bg-muted/30">
+                          <Loader className="w-5 h-5 text-primary animate-spin mr-2" />
+                          <span className="text-sm text-muted-foreground"></span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={selectedCategory}
+                          onValueChange={setSelectedCategory}
+                        >
+                          <SelectTrigger className="bg-muted/50 border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                            <SelectValue placeholder="Select Category" />
+                          </SelectTrigger>
+
+                          <SelectContent>
+                            {categories.length > 0 ? (
+                              categories.map((cat) => (
+                                <SelectItem
+                                  key={cat._id}
+                                  value={cat.categoryName}
+                                  className="hover:bg-primary hover:text-white transition-colors"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {cat.logo?.url && (
+                                      <img
+                                        src={cat.logo.url}
+                                        alt={cat.categoryName}
+                                        className="w-5 h-5 rounded-md object-cover"
+                                      />
+                                    )}
+                                    <span>{cat.categoryName}</span>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-data" disabled>
+                                No categories found
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
+
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground">Unit of Measure</Label>
+                      <Label className="text-sm font-medium text-foreground">
+                        Unit of Measure
+                      </Label>
                       <Input
                         placeholder="PCS, KG, Liter, etc."
                         className="focus:ring-2 focus:ring-primary/20 border-2 transition-all duration-200"
@@ -277,10 +560,20 @@ const ProductInfo = () => {
                   </div>
 
                   <Button
-                    className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 py-3 text-base font-medium mt-4"
+                    disabled={loading}
+                    className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 py-3 text-base font-medium mt-4 flex items-center justify-center"
                     onClick={handleAddProduct}
                   >
-                    Add Product
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        {isEditMode ? "Updating..." : "Saving..."}
+                      </div>
+                    ) : isEditMode ? (
+                      "Update Product"
+                    ) : (
+                      "Add Product"
+                    )}
                   </Button>
                 </div>
               </DialogContent>
@@ -329,7 +622,6 @@ const ProductInfo = () => {
                   Customize
                 </Button>
               </div>
-
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -338,165 +630,207 @@ const ProductInfo = () => {
                 <thead className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/50">
                   <tr>
                     {visibleFields.includes("sr") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Sr</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Sr
+                      </th>
                     )}
                     {visibleFields.includes("image") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Image</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Image
+                      </th>
                     )}
                     {visibleFields.includes("itemCode") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Item Code</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Item Code
+                      </th>
                     )}
                     {visibleFields.includes("itemName") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Item Name</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Item Name
+                      </th>
                     )}
                     {visibleFields.includes("description") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Description</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Description
+                      </th>
                     )}
                     {visibleFields.includes("category") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Category
+                      </th>
                     )}
                     {visibleFields.includes("unit") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Unit</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Unit
+                      </th>
                     )}
                     {visibleFields.includes("barcode") && (
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Barcode</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Barcode
+                      </th>
                     )}
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-border/30">
-                  {filteredProducts.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className="group hover:bg-primary/5 transition-all duration-300 ease-in-out transform hover:scale-[1.002]"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      {visibleFields.includes("sr") && (
-                        <td className="px-6 py-4 font-semibold">{index + 1}</td>
-                      )}
-
-                      {visibleFields.includes("image") && (
-                        <td className="px-6 py-4">
-                          {item.image ? (
-                            <img
-                              src={item.image}
-                              alt={item.itemName}
-                              className="w-12 h-12 object-cover rounded-xl border-2 border-primary/20 group-hover:border-primary/40 transition-all duration-300 shadow-sm"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-gradient-to-br from-muted to-muted/70 border-2 border-dashed border-muted-foreground/30 rounded-xl flex items-center justify-center group-hover:border-primary/30 transition-all duration-300">
-                              <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                            </div>
-                          )}
-                        </td>
-                      )}
-
-                      {visibleFields.includes("itemCode") && (
-                        <td className="px-6 py-4">
-                          <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
-                            {item.itemCode}
-                          </div>
-                        </td>
-                      )}
-
-                      {visibleFields.includes("itemName") && (
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
-                            {item.itemName}
-                          </div>
-                        </td>
-                      )}
-
-                      {visibleFields.includes("description") && (
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-muted-foreground line-clamp-2 max-w-xs">
-                            {item.description}
-                          </p>
-                        </td>
-                      )}
-
-                      {visibleFields.includes("category") && (
-                        <td className="px-6 py-4">
-                          <Badge
-                            variant="outline"
-                            className={`${getCategoryColor(item.category)} border-2 font-medium text-xs px-2 py-1 rounded-full`}
-                          >
-                            {item.category}
-                          </Badge>
-                        </td>
-                      )}
-
-                      {visibleFields.includes("unit") && (
-                        <td className="px-6 py-4">
-                          <div className="font-medium bg-muted/30 text-foreground px-3 py-1 rounded-full text-sm border border-border inline-block">
-                            {item.unit}
-                          </div>
-                        </td>
-                      )}
-
-                      {visibleFields.includes("barcode") && (
-                        <td className="px-6 py-4">
-                          {item.barcode ? (
-                            <div className="flex items-center gap-2">
-                              <Barcode className="w-4 h-4 text-green-600" />
-                              <span className="font-mono text-sm text-foreground bg-green-50 px-2 py-1 rounded border border-green-200">
-                                {item.barcode}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground italic text-sm bg-muted/30 px-3 py-1 rounded-full border border-dashed border-muted-foreground/30">
-                              No barcode
-                            </span>
-                          )}
-                        </td>
-                      )}
-
-                      {/* Actions always visible */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleView(item.id)}
-                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(item.id)}
-                            className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600 transition-all duration-200"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(item.id)}
-                            className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="9" className="py-20 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <Loader className="w-10 h-10 text-primary animate-spin mb-2" />
+                          <p className="text-sm text-muted-foreground font-medium"></p>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredProducts.length > 0 ? (
+                    currentProducts.map((item, index) => (
+                      <tr
+                        key={item.id}
+                        className="group hover:bg-primary/5 transition-all duration-300 ease-in-out transform hover:scale-[1.002]"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        {visibleFields.includes("sr") && (
+                          <td className="px-6 py-4 font-semibold">
+                            {startIndex + index + 1}
+                          </td>
+                        )}
+
+                        {visibleFields.includes("image") && (
+                          <td className="px-6 py-4">
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.itemName}
+                                className="w-12 h-12 object-cover rounded-xl border-2 border-primary/20 group-hover:border-primary/40 transition-all duration-300 shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gradient-to-br from-muted to-muted/70 border-2 border-dashed border-muted-foreground/30 rounded-xl flex items-center justify-center group-hover:border-primary/30 transition-all duration-300">
+                                <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                              </div>
+                            )}
+                          </td>
+                        )}
+
+                        {visibleFields.includes("itemCode") && (
+                          <td className="px-6 py-4">
+                            <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
+                              {item.itemCode}
+                            </div>
+                          </td>
+                        )}
+
+                        {visibleFields.includes("itemName") && (
+                          <td className="px-6 py-4">
+                            <div className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
+                              {item.itemName}
+                            </div>
+                          </td>
+                        )}
+
+                        {visibleFields.includes("description") && (
+                          <td className="px-6 py-4">
+                            <p className="text-sm text-muted-foreground line-clamp-2 max-w-xs">
+                              {item.description}
+                            </p>
+                          </td>
+                        )}
+
+                        {visibleFields.includes("category") && (
+                          <td className="px-6 py-4">
+                            <Badge
+                              variant="outline"
+                              className={`${getCategoryColor(
+                                item.category
+                              )} border-2 font-medium text-xs px-2 py-1 rounded-full`}
+                            >
+                              {item.category}
+                            </Badge>
+                          </td>
+                        )}
+
+                        {visibleFields.includes("unit") && (
+                          <td className="px-6 py-4">
+                            <div className="font-medium bg-muted/30 text-foreground px-3 py-1 rounded-full text-sm border border-border inline-block">
+                              {item.unit}
+                            </div>
+                          </td>
+                        )}
+
+                        {visibleFields.includes("barcode") && (
+                          <td className="px-6 py-4">
+                            {item.barcode ? (
+                              <div className="flex items-center gap-2">
+                                <Barcode className="w-4 h-4 text-green-600" />
+                                <span className="font-mono text-sm text-foreground bg-green-50 px-2 py-1 rounded border border-green-200">
+                                  {item.barcode}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground italic text-sm bg-muted/30 px-3 py-1 rounded-full border border-dashed border-muted-foreground/30">
+                                No barcode
+                              </span>
+                            )}
+                          </td>
+                        )}
+
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleView(item.id)}
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(item.id)}
+                              className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600 transition-all duration-200"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(item.id)}
+                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="9">
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                          <p className="font-medium text-lg">
+                            No products found
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Try adjusting your search terms or add a new product
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
-
               </table>
-
-              {filteredProducts.length === 0 && (
-                <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground font-medium text-lg">No products found</p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Try adjusting your search terms or add a new product
-                  </p>
-                </div>
-              )}
             </div>
+            {/* Pagination Component */}
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredProducts.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
           </CardContent>
         </Card>
       </div>
@@ -570,8 +904,12 @@ const ProductInfo = () => {
           </Button>
         </DialogContent>
       </Dialog>
-
-
+      {/* view model */}
+      <ProductViewModal
+        isOpen={isViewOpen}
+        onClose={setIsViewOpen}
+        product={selectedProduct}
+      />
     </DashboardLayout>
   );
 };

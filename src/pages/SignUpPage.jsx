@@ -4,12 +4,24 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Lock, Phone, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  User,
+  Mail,
+  Lock,
+  Phone,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../Api/AxiosInstance";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -24,14 +36,46 @@ const Signup = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { firstName, lastName, email, password, confirmPassword, phone } = formData;
+    const { firstName, lastName, email, password, confirmPassword, phone } =
+      formData;
 
-    // Mandatory fields check
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      toast.error("First name, last name, email, password, and confirm password are required");
+    // Field-by-field validation
+
+    if (!firstName.trim()) {
+      toast.error("Please enter your first name");
+      return;
+    }
+
+    if (!lastName.trim()) {
+      toast.error("Please enter your last name");
+      return;
+    }
+
+    if (!email.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    if (!phone.trim()) {
+      toast.error("Please enter your phone number");
+      return;
+    }
+
+    if (!password.trim()) {
+      toast.error("Please enter a password");
+      return;
+    }
+
+    if (password.length < 4) {
+      toast.error("Password must be at least 4 characters long");
+      return;
+    }
+
+    if (!confirmPassword.trim()) {
+      toast.error("Please confirm your password");
       return;
     }
 
@@ -40,13 +84,39 @@ const Signup = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
+    try {
+      const res = await api.post("/auth/onboard-admin", {
+        firstName,
+        lastName,
+        phoneNumber: phone, // match backend key
+        email,
+        password,
+      });
 
-    toast.success("Account created successfully! Redirecting...");
-    // Add actual signup API call here
+      if (res) {
+        toast.success("Account created successfully!");
+
+        // ✅ Clear form after successful signup
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          phone: "",
+        });
+
+        // ✅ Redirect with a short delay so toast appears first
+        setTimeout(() => navigate("/login"), 1000);
+      } else {
+        toast.error(res.data?.message || "Signup failed");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error(
+        error.response?.data?.message || "Something went wrong during signup"
+      );
+    }
   };
 
   const getPasswordStrength = () => {
@@ -61,10 +131,10 @@ const Signup = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4 relative overflow-hidden">
       {/* ERP-themed Background Image with Overlay */}
       <div className="absolute inset-0 bg-black/40 z-0"></div>
-      <div 
+      <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-20"
         style={{
-          backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" fill="none"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%230ea5e9;stop-opacity:1" /><stop offset="100%" style="stop-color:%238b5cf6;stop-opacity:1" /></linearGradient></defs><rect width="1200" height="800" fill="url(%23grad1)"/><g fill="white" fill-opacity="0.1"><circle cx="200" cy="150" r="80"/><circle cx="1000" cy="650" r="120"/><rect x="400" y="100" width="300" height="200" rx="20"/><rect x="150" y="500" width="250" height="150" rx="15"/><rect x="800" y="200" width="350" height="250" rx="25"/><path d="M500 600 L700 600 L700 700 L500 700 Z" rx="10"/><path d="M300 300 L450 300 L450 400 L300 400 Z" rx="8"/></g><g stroke="white" stroke-width="2" stroke-opacity="0.2" fill="none"><line x1="50" y1="50" x2="1150" y2="50"/><line x1="50" y1="750" x2="1150" y2="750"/><line x1="50" y1="50" x2="50" y2="750"/><line x1="1150" y1="50" x2="1150" y2="750"/></g></svg>')`
+          backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" fill="none"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%230ea5e9;stop-opacity:1" /><stop offset="100%" style="stop-color:%238b5cf6;stop-opacity:1" /></linearGradient></defs><rect width="1200" height="800" fill="url(%23grad1)"/><g fill="white" fill-opacity="0.1"><circle cx="200" cy="150" r="80"/><circle cx="1000" cy="650" r="120"/><rect x="400" y="100" width="300" height="200" rx="20"/><rect x="150" y="500" width="250" height="150" rx="15"/><rect x="800" y="200" width="350" height="250" rx="25"/><path d="M500 600 L700 600 L700 700 L500 700 Z" rx="10"/><path d="M300 300 L450 300 L450 400 L300 400 Z" rx="8"/></g><g stroke="white" stroke-width="2" stroke-opacity="0.2" fill="none"><line x1="50" y1="50" x2="1150" y2="50"/><line x1="50" y1="750" x2="1150" y2="750"/><line x1="50" y1="50" x2="50" y2="750"/><line x1="1150" y1="50" x2="1150" y2="750"/></g></svg>')`,
         }}
       ></div>
 
@@ -85,7 +155,7 @@ const Signup = () => {
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
               animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${15 + Math.random() * 10}s`
+              animationDuration: `${15 + Math.random() * 10}s`,
             }}
           />
         ))}
@@ -94,7 +164,7 @@ const Signup = () => {
       <Card className="w-full max-w-2xl bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-300 relative z-10">
         {/* Card Glow Effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg blur-xl opacity-50 -z-10"></div>
-        
+
         <CardHeader className="text-center pb-8 pt-10 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
@@ -114,7 +184,10 @@ const Signup = () => {
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="firstName"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   First Name <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -132,9 +205,12 @@ const Signup = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-3">
-                <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="lastName"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Last Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -152,7 +228,10 @@ const Signup = () => {
             {/* Email & Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Email Address <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -171,9 +250,12 @@ const Signup = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-3">
-                <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="phone"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Phone Number
                 </Label>
                 <div className="relative">
@@ -195,7 +277,10 @@ const Signup = () => {
             {/* Password Fields */}
             <div className="space-y-6">
               <div className="space-y-3">
-                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Password <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -224,7 +309,7 @@ const Signup = () => {
                     )}
                   </button>
                 </div>
-                
+
                 {/* Password Strength Indicator */}
                 {formData.password && (
                   <div className="flex items-center gap-3 mt-2">
@@ -238,9 +323,15 @@ const Signup = () => {
                           : "bg-green-50 text-green-700 border-green-200"
                       }`}
                     >
-                      {getPasswordStrength() === "weak" && <AlertCircle className="w-3 h-3 mr-1" />}
-                      {getPasswordStrength() === "medium" && <AlertCircle className="w-3 h-3 mr-1" />}
-                      {getPasswordStrength() === "strong" && <CheckCircle className="w-3 h-3 mr-1" />}
+                      {getPasswordStrength() === "weak" && (
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                      )}
+                      {getPasswordStrength() === "medium" && (
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                      )}
+                      {getPasswordStrength() === "strong" && (
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                      )}
                       {getPasswordStrength() === "weak" && "Weak"}
                       {getPasswordStrength() === "medium" && "Medium"}
                       {getPasswordStrength() === "strong" && "Strong"}
@@ -257,7 +348,10 @@ const Signup = () => {
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Confirm Password <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -273,7 +367,8 @@ const Signup = () => {
                     onChange={handleChange}
                     required
                     className={`pl-10 pr-12 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200 bg-white/80 ${
-                      formData.confirmPassword && formData.password !== formData.confirmPassword
+                      formData.confirmPassword &&
+                      formData.password !== formData.confirmPassword
                         ? "border-red-400 focus:border-red-500"
                         : ""
                     }`}
@@ -290,12 +385,13 @@ const Signup = () => {
                     )}
                   </button>
                 </div>
-                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p className="text-xs text-red-600 flex items-center gap-1 mt-2">
-                    <AlertCircle className="w-3 h-3" />
-                    Passwords do not match
-                  </p>
-                )}
+                {formData.confirmPassword &&
+                  formData.password !== formData.confirmPassword && (
+                    <p className="text-xs text-red-600 flex items-center gap-1 mt-2">
+                      <AlertCircle className="w-3 h-3" />
+                      Passwords do not match
+                    </p>
+                  )}
               </div>
             </div>
 
@@ -308,15 +404,24 @@ const Signup = () => {
                 required
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
+              <label
+                htmlFor="terms"
+                className="ml-2 block text-sm text-gray-700"
+              >
                 I agree to the{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
+                <span
+                  href="#"
+                  className="text-blue-600 hover:text-blue-500 font-medium"
+                >
                   Terms and Conditions
-                </a>{" "}
+                </span>{" "}
                 and{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
+                <span
+                  href="#"
+                  className="text-blue-600 hover:text-blue-500 font-medium"
+                >
                   Privacy Policy
-                </a>
+                </span>
               </label>
             </div>
 
@@ -333,12 +438,12 @@ const Signup = () => {
             <div className="text-center pt-4">
               <p className="text-gray-600">
                 Already have an account?{" "}
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="font-semibold text-blue-600 hover:text-blue-500 transition-colors duration-200"
                 >
                   Sign in here
-                </a>
+                </Link>
               </p>
             </div>
           </form>
@@ -347,14 +452,29 @@ const Signup = () => {
 
       <style jsx>{`
         @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
         }
         @keyframes float {
-          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
-          50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; }
+          0%,
+          100% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 0.4;
+          }
+          50% {
+            transform: translateY(-20px) rotate(180deg);
+            opacity: 0.8;
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;
