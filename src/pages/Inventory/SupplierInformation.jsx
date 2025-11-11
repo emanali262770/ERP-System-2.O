@@ -49,6 +49,7 @@ const mockSupplierData = [
     numberOfOrders: 28,
     email: "info@abctraders.com",
     phone: "+92-321-4567890",
+    orders: 28,
   },
   {
     id: 2,
@@ -63,12 +64,46 @@ const mockSupplierData = [
     numberOfOrders: 19,
     email: "support@megasupply.com",
     phone: "+92-333-1122334",
+    orders: 19,
   },
 ];
 
 const SupplierInformation = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+
+  // --- state setup ---
+  const [visibleFields, setVisibleFields] = useState([
+    "sr",
+    "supplierName",
+    "company",
+    "address",
+    "vatNumber",
+    "avgPurchasePrice",
+    "totalSpendings",
+    "orders",
+  ]);
+
+  // temporary dialog fields
+  const [tempVisibleFields, setTempVisibleFields] = useState("");
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+
+  const [fieldLimitAlert, setFieldLimitAlert] = useState(false);
+
+  // when dialog opens, copy the actual visible fields
+  const handleCustomizeOpen = (open) => {
+    setIsCustomizeOpen(open);
+    if (open) {
+      setTempVisibleFields([]); // <-- start with nothing selected
+    }
+  };
+
+  // apply changes
+  const handleApplyChanges = () => {
+    setVisibleFields(tempVisibleFields);
+    setIsCustomizeOpen(false);
+    toast.success("Display settings updated!");
+  };
 
   const filteredSuppliers = mockSupplierData.filter(
     (s) =>
@@ -285,12 +320,22 @@ const SupplierInformation = () => {
                 <Warehouse className="w-5 h-5 text-primary" />
                 Supplier Records
               </CardTitle>
-              <Badge
-                variant="secondary"
-                className="bg-primary/10 text-primary border-primary/20"
-              >
-                {filteredSuppliers.length} suppliers
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Badge
+                  variant="primary"
+                  className="bg-primary/10 text-primary border-primary/20"
+                >
+                  {filteredSuppliers.length} entries
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCustomizeOpen(true)}
+                  className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl text-white transition-all duration-200"
+                >
+                  Customize
+                </Button>
+              </div>
             </div>
           </CardHeader>
 
@@ -298,61 +343,102 @@ const SupplierInformation = () => {
             <table className="w-full text-sm table-auto md:table-fixed">
               <thead className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[60px]">
-                    Sr
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[150px]">
-                    Supplier Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[150px]">
-                    Company
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[180px]">
-                    Address
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[120px]">
-                    VAT Number
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[140px]">
-                    Avg Purchase Price
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[140px]">
-                    Total Spendings
-                  </th>
+                  {visibleFields.includes("sr") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[60px]">
+                      Sr
+                    </th>
+                  )}
+
+                  {visibleFields.includes("supplierName") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[120px]">
+                      Supplier Name
+                    </th>
+                  )}
+                  {visibleFields.includes("company") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[130px]">
+                      Company
+                    </th>
+                  )}
+                  {visibleFields.includes("address") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[180px]">
+                      Address
+                    </th>
+                  )}
+                  {visibleFields.includes("vatNumber") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[100px]">
+                      VAT Number
+                    </th>
+                  )}
+                  {visibleFields.includes("avgPurchasePrice") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[140px]">
+                      Avg Purchase Price
+                    </th>
+                  )}
+                  {visibleFields.includes("totalSpendings") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[140px]">
+                      Total Spendings
+                    </th>
+                  )}
+                  {visibleFields.includes("orders") && (
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[120px]">
+                      Orders
+                    </th>
+                  )}
                   <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[100px]">
                     Actions
                   </th>
                 </tr>
               </thead>
 
+
               <tbody className="divide-y divide-border/30">
-                {filteredSuppliers.map((s) => (
+                {filteredSuppliers.map((s, index) => (
                   <tr
                     key={s.id}
                     className="group hover:bg-primary/5 transition-all duration-300 ease-in-out transform hover:scale-[1.002]"
                   >
-                    <td className="px-6 py-4 font-semibold whitespace-nowrap overflow-hidden text-ellipsis ">
-                      {s.id}
-                    </td>
-                    <td className="px-6 py-4 font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px]">
-                      {s.supplierName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
-                      {s.company}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
-                      {s.address}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
-                      {s.vatNumber}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
-                      {s.avgPurchasePrice}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
-                      {s.totalSpendings}
-                    </td>
+                    {visibleFields.includes("sr") && (
+                      <td className="px-6 py-4 font-semibold whitespace-nowrap overflow-hidden text-ellipsis">
+                        {index + 1}
+                      </td>
+                    )}
 
+                    {visibleFields.includes("supplierName") && (
+                      <td className="px-6 py-4 font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+                        {s.supplierName}
+                      </td>
+                    )}
+                    {visibleFields.includes("company") && (
+                      <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                        {s.company}
+                      </td>
+                    )}
+                    {visibleFields.includes("address") && (
+                      <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
+                        {s.address}
+                      </td>
+                    )}
+                    {visibleFields.includes("vatNumber") && (
+                      <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+                        {s.vatNumber}
+                      </td>
+                    )}
+                    {visibleFields.includes("avgPurchasePrice") && (
+                      <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+                        {s.avgPurchasePrice}
+                      </td>
+                    )}
+                    {visibleFields.includes("totalSpendings") && (
+                      <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                        {s.totalSpendings}
+                      </td>
+                    )}
+
+                    {visibleFields.includes("orders") && (
+                      <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                        {s.orders}
+                      </td>
+                    )}
                     <td className="px-6 py-4 flex items-center gap-1 whitespace-nowrap">
                       <Button
                         variant="ghost"
@@ -385,6 +471,7 @@ const SupplierInformation = () => {
                   </tr>
                 ))}
               </tbody>
+
             </table>
 
             {filteredSuppliers.length === 0 && (
@@ -401,6 +488,85 @@ const SupplierInformation = () => {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={isCustomizeOpen} onOpenChange={handleCustomizeOpen}>
+        <DialogContent className="max-w-md bg-gradient-to-b from-white/95 to-white/80 dark:from-gray-900/95 dark:to-gray-900/80 backdrop-blur-xl border border-border/40 shadow-2xl rounded-2xl transition-all duration-500 ease-in-out">
+          {/* Header */}
+          <DialogHeader className="pb-3 border-b border-border/30">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+                ⚙️
+              </span>
+              Customize Display
+            </DialogTitle>
+            <p className="text-sm text-gray-500 dark:text-gray-400 pl-10">
+              Choose which columns you want to display in your supplier table.
+            </p>
+          </DialogHeader>
+
+          {/* Alert popup */}
+          {fieldLimitAlert && (
+            <div className="mb-4 p-3 rounded bg-red-100 border border-red-400 text-red-700 font-medium text-center animate-fadeIn">
+              You can select a maximum of 6 fields only!
+            </div>
+          )}
+
+          {/* Options */}
+          <div className="grid grid-cols-2 gap-3 py-6 px-1">
+            {[
+              { key: "sr", label: "Serial Number" },
+              { key: "supplierName", label: "Supplier Name" },
+              { key: "company", label: "Company" },
+              { key: "address", label: "Address" },
+              { key: "vatNumber", label: "VAT Number" },
+              { key: "avgPurchasePrice", label: "Avg Purchase Price" },
+              { key: "totalSpendings", label: "Total Spendings" },
+              { key: "orders", label: "Orders" },
+            ].map(({ key, label }) => (
+              <label
+                key={key}
+                className="group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-300 border border-transparent hover:border-primary/30 hover:bg-primary/5"
+              >
+                <input
+                  type="checkbox"
+                  checked={tempVisibleFields.includes(key)}
+                  onChange={() => {
+                    setTempVisibleFields((prev) => {
+                      if (prev.includes(key)) {
+                        return prev.filter((f) => f !== key);
+                      } else if (prev.length >= 6) {
+                        // Show red alert popup
+                        setFieldLimitAlert(true);
+                        setTimeout(() => setFieldLimitAlert(false), 2500); // hide after 2.5s
+                        return prev;
+                      } else {
+                        return [...prev, key];
+                      }
+                    });
+                  }}
+
+
+                  className="peer appearance-none w-5 h-5 border border-gray-300 dark:border-gray-700 rounded-md checked:bg-gradient-to-br checked:from-primary checked:to-primary/70 transition-all duration-200 flex items-center justify-center relative
+            after:content-['✓'] after:text-white after:font-bold after:text-[11px] after:opacity-0 checked:after:opacity-100 after:transition-opacity"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary transition-colors">
+                  {label}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Button */}
+          <Button
+            className="w-full mt-2 py-3 bg-gradient-to-r from-primary via-primary/80 to-primary/70 text-white font-semibold rounded-xl shadow-lg hover:shadow-primary/40 hover:-translate-y-[1px] transition-all duration-300"
+            onClick={handleApplyChanges}
+          >
+            ✨ Apply Changes
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+
+
     </DashboardLayout>
   );
 };

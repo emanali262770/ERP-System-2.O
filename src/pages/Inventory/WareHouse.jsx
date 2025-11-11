@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Download, Warehouse, MapPin, User, Phone, Mail, Edit, Trash2, Eye, MoreVertical, Building2, Users, AlertCircle } from "lucide-react";
+import { Plus, Search, Download, Warehouse, MapPin, User, Phone, Mail, Edit, Trash2, Eye, MoreVertical, Building2, Users, AlertCircle, List } from "lucide-react";
 import { toast } from "sonner";
 import {
   Select,
@@ -242,13 +242,13 @@ const WareHouse = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-amber-700">Cities Covered</p>
+                  <p className="text-sm font-medium text-amber-700">Total Items</p>
                   <p className="text-2xl font-bold text-amber-900">
                     {new Set(mockWarehouseData.map(w => w.address.split(",").pop().trim())).size}
                   </p>
                 </div>
                 <div className="p-2 bg-amber-500/10 rounded-lg">
-                  <MapPin className="w-5 h-5 text-amber-600" />
+                  <List className="w-5 h-5 text-amber-600" />
                 </div>
               </div>
             </CardContent>

@@ -71,6 +71,17 @@ const TransactionTracking = () => {
   const handleView = (id) => toast.info(`Viewing transaction details for #${id}`);
   const handleRefresh = (id) => toast.success(`Refreshing data for #${id}`);
 
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const [fieldLimitAlert, setFieldLimitAlert] = useState(false);
+  const [tempVisibleFields, setTempVisibleFields] = useState([
+    "id",
+    "totalPurchasedQty",
+    "totalSoldQty",
+    "currentStockBalance",
+    "lastSaleDate",
+    "lastPurchaseDate",
+  ]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -169,52 +180,78 @@ const TransactionTracking = () => {
               >
                 {filteredData.length} records
               </Badge>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCustomizeOpen(true)}
+                  className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl text-white transition-all duration-200"
+                >
+                  Customize
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/50">
-                  <tr className=" whitespace-nowrap">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                      Sr
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                      Total Purchased Qty
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                      Total Sold Qty
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                      Current Stock Balance
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                      Last Sale Date
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                      Last Purchase Date
-                    </th>
+                  <tr className="whitespace-nowrap">
+                    {tempVisibleFields.includes("id") && (
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Sr
+                      </th>
+                    )}
+                    {tempVisibleFields.includes("totalPurchasedQty") && (
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Total Purchased Qty
+                      </th>
+                    )}
+                    {tempVisibleFields.includes("totalSoldQty") && (
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Total Sold Qty
+                      </th>
+                    )}
+                    {tempVisibleFields.includes("currentStockBalance") && (
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Current Stock Balance
+                      </th>
+                    )}
+                    {tempVisibleFields.includes("lastSaleDate") && (
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Last Sale Date
+                      </th>
+                    )}
+                    {tempVisibleFields.includes("lastPurchaseDate") && (
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Last Purchase Date
+                      </th>
+                    )}
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-border/30">
                   {filteredData.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="group hover:bg-primary/5 transition-all duration-300"
-                    >
-                      <td className="px-6 py-4">{item.id}</td>
-                      <td className="px-6 py-4">{item.totalPurchasedQty}</td>
-                      <td className="px-6 py-4 text-green-700 font-semibold">
-                        {item.totalSoldQty}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-blue-700">
-                        {item.currentStockBalance}
-                      </td>
-                      <td className="px-6 py-4 text-sm">{item.lastSaleDate}</td>
-                      <td className="px-6 py-4 text-sm">{item.lastPurchaseDate}</td>
+                    <tr key={item.id} className="group hover:bg-primary/5 transition-all duration-300">
+                      {tempVisibleFields.includes("id") && <td className="px-6 py-4">{item.id}</td>}
+                      {tempVisibleFields.includes("totalPurchasedQty") && (
+                        <td className="px-6 py-4">{item.totalPurchasedQty}</td>
+                      )}
+                      {tempVisibleFields.includes("totalSoldQty") && (
+                        <td className="px-6 py-4 text-green-700 font-semibold">{item.totalSoldQty}</td>
+                      )}
+                      {tempVisibleFields.includes("currentStockBalance") && (
+                        <td className="px-6 py-4 font-bold text-blue-700">{item.currentStockBalance}</td>
+                      )}
+                      {tempVisibleFields.includes("lastSaleDate") && (
+                        <td className="px-6 py-4 text-sm">{item.lastSaleDate}</td>
+                      )}
+                      {tempVisibleFields.includes("lastPurchaseDate") && (
+                        <td className="px-6 py-4 text-sm">{item.lastPurchaseDate}</td>
+                      )}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1">
                           <Button
@@ -226,13 +263,13 @@ const TransactionTracking = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
 
               {filteredData.length === 0 && (
                 <div className="text-center py-12">
@@ -249,6 +286,66 @@ const TransactionTracking = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
+        <DialogContent className="max-w-md bg-gradient-to-b from-white/95 to-white/80 backdrop-blur-xl border border-border/40 shadow-2xl rounded-2xl transition-all duration-500">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">⚙️</span>
+              Customize Display
+            </DialogTitle>
+            <p className="text-sm text-gray-500 pl-10">
+              Choose which columns to display in your table.
+            </p>
+          </DialogHeader>
+
+          {fieldLimitAlert && (
+            <div className="mb-4 p-3 rounded bg-red-100 border border-red-400 text-red-700 font-medium text-center">
+              You can select a maximum of 6 fields only!
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 py-6 px-1">
+            {[
+              { key: "id", label: "Sr" },
+              { key: "totalPurchasedQty", label: "Total Purchased Qty" },
+              { key: "totalSoldQty", label: "Total Sold Qty" },
+              { key: "currentStockBalance", label: "Current Stock Balance" },
+              { key: "lastSaleDate", label: "Last Sale Date" },
+              { key: "lastPurchaseDate", label: "Last Purchase Date" },
+            ].map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer border border-transparent hover:border-primary/30 hover:bg-primary/5">
+                <input
+                  type="checkbox"
+                  checked={tempVisibleFields.includes(key)}
+                  onChange={() => {
+                    setTempVisibleFields(prev => {
+                      if (prev.includes(key)) return prev.filter(f => f !== key);
+                      if (prev.length >= 6) {
+                        setFieldLimitAlert(true);
+                        setTimeout(() => setFieldLimitAlert(false), 2500);
+                        return prev;
+                      }
+                      return [...prev, key];
+                    });
+                  }}
+                  className="w-5 h-5 border border-gray-300 rounded-md checked:bg-gradient-to-br checked:from-primary checked:to-primary/70"
+                />
+                <span className="text-sm font-medium text-gray-700">{label}</span>
+              </label>
+            ))}
+          </div>
+
+          <Button
+            className="w-full mt-2 py-3 bg-gradient-to-r from-primary via-primary/80 to-primary/70 text-white font-semibold rounded-xl"
+            onClick={() => setIsCustomizeOpen(false)}
+          >
+            Apply Changes
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+
     </DashboardLayout>
   );
 };
