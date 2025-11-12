@@ -55,6 +55,7 @@ import api from "../../Api/AxiosInstance";
 import InvoiceViewModal from "./Models/InvoiceViewModal";
 
 const Invoice = () => {
+  const [exporting, setExporting] = useState(false);
   const [invoiceNo, setInvoiceNo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; // adjust per your need
@@ -124,27 +125,28 @@ const Invoice = () => {
   }, [invoiceData, isAddOpen, isEditMode]);
 
   const filteredInvoice = invoiceData
-    .map((inv) => ({
-      _id: inv._id, // ✅ include this
-      invoiceNo: inv.invoiceNo,
-      date: new Date(inv.invoiceDate).toLocaleDateString(),
-      customerName: inv.customerName,
-      description: inv.items?.[0]?.description || "-",
-      quantity: inv.items?.[0]?.quantity || 0,
-      unit: inv?.items[0].unitPrice,
-      vatRate: (inv.items?.[0]?.vatRate || 0) * 100,
-      totalExclVAT: inv.netTotal,
-      vatAmount: inv.vatTotal,
-      totalInclVAT: inv.grandTotal,
-    }))
+  .map((inv) => ({
+    _id: inv._id, // ✅ include this
+    invoiceNo: inv.invoiceNo,
+    date: new Date(inv.invoiceDate).toLocaleDateString(),
+    customerName: inv.customer?.customerName || inv.customerName, // ✅ fix
+    phoneNumber: inv.customer?.phoneNumber, // ✅ optional: add for WhatsApp
+    description: inv.items?.[0]?.description || "-",
+    quantity: inv.items?.[0]?.quantity || 0,
+    unit: inv?.items[0].unitPrice,
+    vatRate: (inv.items?.[0]?.vatRate || 0) * 100,
+    totalExclVAT: inv.netTotal,
+    vatAmount: inv.vatTotal,
+    totalInclVAT: inv.grandTotal,
+  }))
+  .filter(
+    (invoice) =>
+      invoice.customerName
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    .filter(
-      (invoice) =>
-        invoice.customerName
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -157,45 +159,77 @@ const Invoice = () => {
 
   const handleDownload = async (item) => {
     try {
-      if (!item) {
-        toast.error("Please select an invoice to download.");
+      if (!item || !item._id) {
+        toast.error("No invoice selected for download");
         return;
       }
 
-      // Set selected invoice and wait for it to render
-      setSelectedInvoice(item);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      toast.loading("Downloading invoice...");
 
-      const element = pdfRef.current;
-      if (!element) {
-        toast.error("PDF element not found!");
-        return;
-      }
+      // ✅ call backend download endpoint
+      const response = await api.get(
+        `/inventory/invoice/${item._id}/download`,
+        {
+          responseType: "blob",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
 
-      // ✅ Temporarily show the element so html2canvas can capture it
-      element.style.display = "block";
+      // ✅ create blob and link for browser download
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Invoice-${item.invoiceNo}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      toast.dismiss();
+      toast.success(`Invoice ${item.invoiceNo} downloaded successfully`);
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading invoice:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to download invoice PDF"
+      );
+    }
+  };
+  const handleExportExcel = async () => {
+    try {
+      toast.loading("Exporting invoices to Excel...");
+
+      const response = await api.get("/inventory/invoice/export/excel", {
+        responseType: "blob", // important for Excel file
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.api+json", // ✅ added header
+        },
       });
 
-      // ✅ Hide again after capture
-      element.style.display = "none";
+      // ✅ create Excel file blob and trigger download
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Invoices_Report.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Invoice_${item.itemId}.pdf`);
-
-      toast.success(`Invoice ${item.itemId} downloaded!`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to generate PDF!");
+      toast.dismiss();
+      toast.success("Invoice report exported successfully!");
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error exporting invoices:", error);
+      toast.error("Failed to export Excel report!");
     }
   };
 
@@ -211,54 +245,58 @@ const Invoice = () => {
     setIsViewOpen(true);
   };
   const handleSendOption = async (type, invoice) => {
-    if (!invoice) {
-      toast.error("No invoice selected");
-      return;
-    }
+    // console.log(invoice);
+    
+  if (!invoice) {
+    toast.error("No invoice selected");
+    return;
+  }
 
-    if (type === "email") {
-      try {
-        setSendingEmail(true);
-        toast.loading("Sending invoice via email...");
+  if (type === "email") {
+    try {
+      setSendingEmail(true);
+      toast.loading("Sending invoice via email...");
 
-        const payload = {
-          to: invoice.customerEmail || "emanali262770@gmail.com",
-          subject: `Your Invoice ${invoice.invoiceNo} from VESTIAIRE ST. HONORÉ`,
-          message: `Hello ${
-            invoice.customerName || "Customer"
-          }, please find your invoice attached.`,
-        };
+      const payload = {
+        to: invoice.customer?.email || "emanali262770@gmail.com",
+        subject: `Your Invoice ${invoice.invoiceNo} from VESTIAIRE ST. HONORÉ`,
+        message: `Hello ${
+          invoice.customer?.customerName || invoice.customerName || "Customer"
+        }, please find your invoice attached.`,
+      };
 
-        const response = await api.post(
-          `/inventory/invoice/${invoice._id}/send-email`,
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        toast.dismiss();
-        if (response.data.success) toast.success(" Email sent successfully!");
-        else toast.error(response.data.message || "Failed to send email.");
-      } catch (error) {
-        toast.dismiss();
-        console.error("Email send error:", error);
-        toast.error("Error occurred while sending the email.");
-      } finally {
-        setSendingEmail(false);
-      }
-    }
-
-    if (type === "whatsapp") {
-      if (!invoice.customerPhone) {
-        toast.error("Customer phone number missing!");
-        return;
-      }
-      const msg = encodeURIComponent(
-        `Hello ${invoice.customerName}, your invoice ${invoice.invoiceNo} is ready.`
+      const response = await api.post(
+        `/inventory/invoice/${invoice._id}/send-email`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      const phone = invoice.customerPhone.replace(/\D/g, "");
-      window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+
+      toast.dismiss();
+      if (response.data.success) toast.success("Email sent successfully!");
+      else toast.error(response.data.message || "Failed to send email.");
+    } catch (error) {
+      toast.dismiss();
+      console.error("Email send error:", error);
+      toast.error("Error occurred while sending the email.");
+    } finally {
+      setSendingEmail(false);
     }
-  };
+  }
+
+  if (type === "whatsapp") {
+  // ✅ handle both real and fallback phone
+  const phone = invoice.phoneNumber || "03184486979";
+
+  const msg = encodeURIComponent(
+    `Hello ${invoice.customerName || "Customer"}, your invoice ${invoice.invoiceNo} is ready.`
+  );
+
+  window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+  toast.success("Redirecting to WhatsApp...");
+}
+
+};
+
 
   return (
     <DashboardLayout>
@@ -277,12 +315,13 @@ const Invoice = () => {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              //   onClick={handleDownload}
+              onClick={handleExportExcel}
               className="border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 shadow-sm"
             >
               <Download className="w-4 h-4 mr-2" />
               Export Report
             </Button>
+
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger
                 onClick={() => {
