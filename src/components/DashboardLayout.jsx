@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -93,6 +94,7 @@ const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openSubNav, setOpenSubNav] = useState({});
+const { logout } = useAuth();
 
   const selectedCompany = JSON.parse(localStorage.getItem("selectedCompany") || "{}");
   const isInventoryActive = location.pathname.startsWith("/inventory");
@@ -108,6 +110,7 @@ const DashboardLayout = ({ children }) => {
   }, [isInventoryActive, isCompanyManagementActive]);
 
   const handleLogout = () => {
+    logout();
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -250,7 +253,7 @@ const DashboardLayout = ({ children }) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-64 p-6">{children}</main>
+        <main className="flex-1 lg:ml-64 p-6  h-screen overflow-x-auto max-w-full">{children}</main>
       </div>
 
       {/* Mobile Overlay */}

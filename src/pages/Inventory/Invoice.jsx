@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MessageCircle, Mail, Send } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import Pagination from "../../components/Pagination";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus,
@@ -29,6 +37,7 @@ import {
   Trash2,
   Eye,
   DownloadIcon,
+  Loader,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -41,124 +50,105 @@ import {
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import InvoicePDFTemplate from "../../components/InvoicePDFTemplate";
-
-// Mock Data
-const mockInvoiceData = [
-  {
-    invoiceNo: "INV-001",
-    date: "2025-11-11",
-    customerName: "John Doe",
-    customerCompany: "ABC Traders",
-    customerCountry: "France",
-    vatNo: "FR123456789",
-    vatRate: 20,
-    vatRegime: "Local VAT",
-    paymentTerms: "Net 30 Days",
-    bankDetails: {
-      bank: "HSBC",
-      accountNumber: "12345673445",
-      accountType: "Current",
-      currency: "EUR",
-      reference: "INV-001",
-    },
-    items: [
-      {
-        description: "Wireless Mouse",
-        quantity: 2,
-        unitPrice: 600,
-        vatRate: 20,
-        total: 1440,
-      },
-      {
-        description: "Office Chair",
-        quantity: 1,
-        unitPrice: 15000,
-        vatRate: 21,
-        total: 18150,
-      },
-    ],
-  },
-  {
-    invoiceNo: "INV-002",
-    date: "2025-11-10",
-    customerName: "Emma Watson",
-    customerCompany: "Global Furnishers Ltd.",
-    customerCountry: "Germany",
-    vatNo: "DE987654321",
-    vatRate: 19,
-    vatRegime: "Customer Local Rate",
-    paymentTerms: "Due on Receipt",
-    bankDetails: {
-      bank: "Deutsche Bank",
-      accountNumber: "4455667788",
-      accountType: "Business",
-      currency: "EUR",
-      reference: "INV-002",
-    },
-    items: [
-      {
-        description: "Standing Desk",
-        quantity: 1,
-        unitPrice: 4500,
-        vatRate: 19,
-        total: 5355,
-      },
-      {
-        description: "LED Desk Lamp",
-        quantity: 3,
-        unitPrice: 250,
-        vatRate: 19,
-        total: 892.5,
-      },
-    ],
-  },
-];
+import { useAuth } from "../../context/AuthContext";
+import api from "../../Api/AxiosInstance";
+import InvoiceViewModal from "./Models/InvoiceViewModal";
 
 const Invoice = () => {
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8; // adjust per your need
+
+  const [invoiceDate, setInvoiceDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoiceData, setInvoiceData] = useState([]);
+  const [summary, setSummary] = useState({
+    totalInvoices: 0,
+    totalAmountExclVAT: 0,
+    totalVATAmount: 0,
+    highValueInvoices: 0,
+  });
+  const [loading, setLoading] = useState(false);
 
+  const { token } = useAuth();
   const pdfRef = useRef();
+  // fetch invoice
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/inventory/invoice", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  const filteredInvoice = mockInvoiceData
-    .map((inv) => {
-      // Calculate totals for display compatibility
-      const totalExclVAT = inv.items.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      );
-      const vatAmount = inv.items.reduce(
-        (sum, item) =>
-          sum + (item.unitPrice * item.quantity * item.vatRate) / 100,
-        0
-      );
-      const totalInclVAT = totalExclVAT + vatAmount;
+      if (res.data.success) {
+        setInvoiceData(res.data.data || []);
+        setSummary(res.data.summary || {});
+      } else {
+        toast.error("Failed to fetch invoices");
+      }
+    } catch (err) {
+      console.error("Error fetching invoices:", err);
+      toast.error("Error fetching invoices");
+    } finally {
+      setTimeout(() => setLoading(false), 800);
+    }
+  };
 
-      return {
-        ...inv,
-        itemId: inv.invoiceNo, // For your table "Item / Product" column
-        description: inv.customerCompany,
-        quantity: inv.items.length,
-        unit: "pcs",
-        totalExclVAT,
-        vatAmount,
-        totalInclVAT,
-      };
-    })
-    .filter((invoice) => {
-      const matchInvoiceNo = invoice.invoiceNo
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchCustomer = invoice.customerName
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchItems = invoice.items?.some((it) =>
-        it.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
 
-      return matchInvoiceNo || matchCustomer || matchItems;
-    });
+  // Auto-generate invoice number based on highest existing number
+  useEffect(() => {
+    if (!isEditMode) {
+      if (invoiceData.length > 0) {
+        const maxNo = Math.max(
+          ...invoiceData.map((inv) => {
+            const match = inv.invoiceNo?.match(/INV-(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          })
+        );
+        setInvoiceNo(`INV-${(maxNo + 1).toString().padStart(3, "0")}`);
+      } else {
+        setInvoiceNo("INV-001");
+      }
+    }
+  }, [invoiceData, isAddOpen, isEditMode]);
+
+  const filteredInvoice = invoiceData
+    .map((inv) => ({
+      _id: inv._id, // ✅ include this
+      invoiceNo: inv.invoiceNo,
+      date: new Date(inv.invoiceDate).toLocaleDateString(),
+      customerName: inv.customerName,
+      description: inv.items?.[0]?.description || "-",
+      quantity: inv.items?.[0]?.quantity || 0,
+      unit: inv?.items[0].unitPrice,
+      vatRate: (inv.items?.[0]?.vatRate || 0) * 100,
+      totalExclVAT: inv.netTotal,
+      vatAmount: inv.vatTotal,
+      totalInclVAT: inv.grandTotal,
+    }))
+
+    .filter(
+      (invoice) =>
+        invoice.customerName
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentInvoices = filteredInvoice.slice(startIndex, endIndex);
 
   const handleSaveInvoice = () => {
     toast.success("Invoice saved successfully!");
@@ -209,6 +199,67 @@ const Invoice = () => {
     }
   };
 
+  const handleView = (invoiceNo) => {
+    const invoice = invoiceData.find((inv) => inv.invoiceNo === invoiceNo);
+    // console.log({invoice});
+
+    if (!invoice) {
+      toast.error("Invoice not found!");
+      return;
+    }
+    setSelectedInvoice(invoice);
+    setIsViewOpen(true);
+  };
+  const handleSendOption = async (type, invoice) => {
+    if (!invoice) {
+      toast.error("No invoice selected");
+      return;
+    }
+
+    if (type === "email") {
+      try {
+        setSendingEmail(true);
+        toast.loading("Sending invoice via email...");
+
+        const payload = {
+          to: invoice.customerEmail || "emanali262770@gmail.com",
+          subject: `Your Invoice ${invoice.invoiceNo} from VESTIAIRE ST. HONORÉ`,
+          message: `Hello ${
+            invoice.customerName || "Customer"
+          }, please find your invoice attached.`,
+        };
+
+        const response = await api.post(
+          `/inventory/invoice/${invoice._id}/send-email`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        toast.dismiss();
+        if (response.data.success) toast.success(" Email sent successfully!");
+        else toast.error(response.data.message || "Failed to send email.");
+      } catch (error) {
+        toast.dismiss();
+        console.error("Email send error:", error);
+        toast.error("Error occurred while sending the email.");
+      } finally {
+        setSendingEmail(false);
+      }
+    }
+
+    if (type === "whatsapp") {
+      if (!invoice.customerPhone) {
+        toast.error("Customer phone number missing!");
+        return;
+      }
+      const msg = encodeURIComponent(
+        `Hello ${invoice.customerName}, your invoice ${invoice.invoiceNo} is ready.`
+      );
+      const phone = invoice.customerPhone.replace(/\D/g, "");
+      window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -233,13 +284,19 @@ const Invoice = () => {
               Export Report
             </Button>
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <DialogTrigger asChild>
+              <DialogTrigger
+                onClick={() => {
+                  setIsEditMode(false);
+                  setInvoiceNo(""); // optional reset to re-trigger useEffect
+                }}
+                asChild
+              >
                 <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Invoice
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+              <DialogContent className="max-w-2xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
                 <DialogHeader className="border-b border-border/50 pb-4">
                   <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
                     <FileSignature className="w-5 h-5 text-primary" />
@@ -253,8 +310,9 @@ const Invoice = () => {
                     <div className="space-y-2">
                       <Label>Invoice No</Label>
                       <Input
-                        placeholder="INV-001"
-                        className="border-2 focus:ring-2 focus:ring-primary/20"
+                        value={invoiceNo}
+                        readOnly
+                        className="border-2 focus:ring-2 focus:ring-primary/20 bg-gray-100 cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-2">
@@ -262,6 +320,8 @@ const Invoice = () => {
                       <Input
                         type="date"
                         className="border-2 focus:ring-2 focus:ring-primary/20"
+                        value={invoiceDate}
+                        onChange={(e) => setInvoiceDate(e.target.value)}
                       />
                     </div>
                   </div>
@@ -395,7 +455,7 @@ const Invoice = () => {
                     Total Invoices
                   </p>
                   <p className="text-2xl font-bold text-blue-900">
-                    {mockInvoiceData.length}
+                    {summary.totalInvoices || 0}
                   </p>
                 </div>
                 <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -413,18 +473,7 @@ const Invoice = () => {
                     Total Amount (Excl. VAT)
                   </p>
                   <p className="text-2xl font-bold text-green-900">
-                    € 
-                    {mockInvoiceData
-                      .reduce(
-                        (sum, inv) =>
-                          sum +
-                          inv.items.reduce(
-                            (s, item) => s + item.unitPrice * item.quantity,
-                            0
-                          ),
-                        0
-                      )
-                      .toLocaleString()}
+                    € {summary.totalAmountExclVAT || 0}
                   </p>
                 </div>
                 <div className="p-2 bg-green-500/10 rounded-lg">
@@ -442,21 +491,7 @@ const Invoice = () => {
                     Total VAT Amount
                   </p>
                   <p className="text-2xl font-bold text-amber-900">
-                    €
-                    {mockInvoiceData
-                      .reduce(
-                        (sum, inv) =>
-                          sum +
-                          inv.items.reduce(
-                            (s, item) =>
-                              s +
-                              (item.unitPrice * item.quantity * item.vatRate) /
-                                100,
-                            0
-                          ),
-                        0
-                      )
-                      .toLocaleString()}
+                    € {summary.totalVATAmount || 0}
                   </p>
                 </div>
                 <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -474,10 +509,7 @@ const Invoice = () => {
                     High-Value Invoices
                   </p>
                   <p className="text-2xl font-bold text-purple-900">
-                    {
-                      mockInvoiceData.filter((i) => i.totalInclVAT > 10000)
-                        .length
-                    }
+                    {summary.highValueInvoices || 0}
                   </p>
                 </div>
                 <div className="p-2 bg-purple-500/10 rounded-lg">
@@ -497,7 +529,10 @@ const Invoice = () => {
                 placeholder="Search by item or description..."
                 className="pl-12 pr-4 py-3 rounded-xl border-2 border-primary/20 focus:border-primary/50 bg-background/80"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
           </CardContent>
@@ -522,10 +557,10 @@ const Invoice = () => {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/50">
+                <thead className="bg-gradient-to-r whitespace-nowrap from-muted/40 to-muted/20 border-b border-border/50">
                   <tr>
-                     <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                     Sr
+                    <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
+                      Sr
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
                       Item / Product
@@ -537,7 +572,7 @@ const Invoice = () => {
                       Quantity
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                      Unit
+                      Unit Price
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
                       VAT Rate (%)
@@ -558,85 +593,161 @@ const Invoice = () => {
                 </thead>
 
                 <tbody className="divide-y divide-border/30">
-                  {filteredInvoice.map((item,i) => (
-                    <tr
-                      key={item.id}
-                      className="group hover:bg-primary/5 transition-all duration-300"
-                    >
-                         <td className="px-6 py-4">{i+1}</td>
-                      <td className="px-6 py-4">
-                        <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
-                          {item.itemId}
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">{item.description}</td>
-                      <td className="px-6 py-4">{item.quantity}</td>
-                      <td className="px-6 py-4">{item.unit}</td>
-                      <td className="px-6 py-4">{item.vatRate}%</td>
-                      <td className="px-6 py-4">
-                        €{item.totalExclVAT.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        €{item.vatAmount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 font-semibold">
-                        €{item.totalInclVAT.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-[2px]">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                            title="View"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                           className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                             className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            onClick={() => handleDownload(item)}
-                            variant="ghost"
-                            size="sm"
-                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                            title="Download"
-                          >
-                            <DownloadIcon className="w-4 h-4" />
-                          </Button>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="10" className="text-center py-10">
+                        <div className="flex flex-col items-center justify-center">
+                          <Loader className="w-10 h-10 text-primary animate-spin mb-3" />
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredInvoice.length > 0 ? (
+                    currentInvoices.map((item, i) => (
+                      <tr
+                        key={item._id || i}
+                        className="group hover:bg-primary/5 transition-all duration-300"
+                      >
+                        <td className="px-6 py-4 font-semibold">
+                          {startIndex + i + 1}
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
+                            {item.invoiceNo}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                          {item.description}
+                        </td>
+                        <td className="px-6 py-4">{item.quantity}</td>
+                        <td className="px-6 py-4">{item.unit}</td>
+                        <td className="px-6 py-4">{item.vatRate}%</td>
+                        <td className="px-6 py-4">
+                          €{item.totalExclVAT?.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          €{item.vatAmount?.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 font-semibold">
+                          €{item.totalInclVAT?.toLocaleString()}
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                          <div className="flex items-center ">
+                            {/* ✉️ Send Dropdown */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="none"
+                                  size="sm"
+                                  className="flex items-center  text-gray-700"
+                                >
+                                  {sendingEmail ? (
+                                    <Loader className="w-4 h-4 text-primary animate-spin" />
+                                  ) : (
+                                    <Send className="w-4 h-4 text-primary" />
+                                  )}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer"
+                                  onClick={() =>
+                                    handleSendOption("whatsapp", item)
+                                  }
+                                >
+                                  <MessageCircle className="w-4 h-4 text-green-600" />
+                                  <span>WhatsApp</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer"
+                                  onClick={() =>
+                                    handleSendOption("email", item)
+                                  }
+                                >
+                                  <Mail className="w-4 h-4 text-blue-600" />
+                                  <span>Email</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            {/* 👁 View */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              title="View"
+                              onClick={() => handleView(item.invoiceNo)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+
+                            {/* ✏️ Edit */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+
+                            {/* 🗑 Delete */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+
+                            {/* 📥 Download */}
+                            <Button
+                              onClick={() => handleDownload(item)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                              title="Download"
+                            >
+                              <DownloadIcon className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="10" className="text-center py-12">
+                        <div className="flex flex-col items-center justify-center">
+                          <Info className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                          <p className="text-muted-foreground font-medium text-lg">
+                            No invoice items found
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Try adjusting your search term or create a new
+                            invoice
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-
-              {filteredInvoice.length === 0 && (
-                <div className="text-center py-12">
-                  <Info className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground font-medium text-lg">
-                    No invoice items found
-                  </p>
-                </div>
-              )}
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredInvoice.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
             </div>
           </CardContent>
         </Card>
       </div>
+      <InvoiceViewModal
+        isOpen={isViewOpen}
+        onClose={setIsViewOpen}
+        invoice={selectedInvoice}
+      />
       <InvoicePDFTemplate ref={pdfRef} invoice={selectedInvoice} />
     </DashboardLayout>
   );

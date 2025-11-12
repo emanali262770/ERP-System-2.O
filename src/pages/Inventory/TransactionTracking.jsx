@@ -340,40 +340,40 @@ const TransactionTracking = () => {
                           </td>
                         )}
                         {visibleFields.includes("itemName") && (
-                          <td className="px-6 py-4">{item.itemName || "-"}</td>
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">{item.itemName || "-"}</td>
                         )}
                         {visibleFields.includes("itemCode") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
                               {item.itemCode || "-"}
                             </div>
                           </td>
                         )}
                         {visibleFields.includes("category") && (
-                          <td className="px-6 py-4">{item.category || "-"}</td>
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">{item.category || "-"}</td>
                         )}
                         {visibleFields.includes("totalPurchasedQty") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             {item.totalPurchasedQty ?? "-"}
                           </td>
                         )}
                         {visibleFields.includes("totalSoldQty") && (
-                          <td className="px-6 py-4 text-green-700 font-semibold">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] text-green-700 font-semibold">
                             {item.totalSoldQty ?? "-"}
                           </td>
                         )}
                         {visibleFields.includes("currentStockBalance") && (
-                          <td className="px-6 py-4 font-bold text-blue-700">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] font-bold text-blue-700">
                             {item.currentStockBalance ?? "-"}
                           </td>
                         )}
                         {visibleFields.includes("lastSaleDate") && (
-                          <td className="px-6 py-4 text-sm">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] text-sm">
                             {item.lastSaleDate || "-"}
                           </td>
                         )}
                         {visibleFields.includes("lastPurchaseDate") && (
-                          <td className="px-6 py-4 text-sm">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] text-sm">
                             {item.lastPurchaseDate || "-"}
                           </td>
                         )}

@@ -718,7 +718,7 @@ const ProductInfo = () => {
                         )}
 
                         {visibleFields.includes("itemCode") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
                               {item.itemCode || "-"}
                             </div>
@@ -726,7 +726,7 @@ const ProductInfo = () => {
                         )}
 
                         {visibleFields.includes("itemName") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
                               {item.itemName || "-"}
                             </div>
@@ -734,7 +734,7 @@ const ProductInfo = () => {
                         )}
 
                         {visibleFields.includes("description") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <p className="text-sm text-muted-foreground line-clamp-2 max-w-xs">
                               {item.description || "-"}
                             </p>
@@ -755,7 +755,7 @@ const ProductInfo = () => {
                         )}
 
                         {visibleFields.includes("unit") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="font-medium bg-muted/30 text-foreground px-3 py-1 rounded-full text-sm border border-border inline-block">
                               {item.unit || "-"}
                             </div>
@@ -763,7 +763,7 @@ const ProductInfo = () => {
                         )}
 
                         {visibleFields.includes("barcode") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             {item.barcode ? (
                               <div className="flex items-center gap-2">
                                 <Barcode className="w-4 h-4 text-green-600" />

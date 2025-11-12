@@ -686,7 +686,7 @@ const StockPurchaseDetails = () => {
         </Card>
 
         {/* Stock Table with Actions Field */}
-        <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-500 bg-gradient-to-br from-background to-muted/5 overflow-hidden">
+        <Card className="border-0 shadow-xl  hover:shadow-2xl transition-all duration-500 bg-gradient-to-br from-background to-muted/5 overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-primary/20 pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent flex items-center gap-2">
@@ -715,9 +715,9 @@ const StockPurchaseDetails = () => {
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-w-full">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/50">
+                <thead className="bg-gradient-to-r whitespace-nowrap from-muted/40 to-muted/20 border-b border-border/50">
                   <tr>
                     {visibleFields.includes("sr") && (
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
@@ -788,13 +788,13 @@ const StockPurchaseDetails = () => {
                         className="group hover:bg-primary/5 transition-all duration-300 ease-in-out transform hover:scale-[1.002]"
                       >
                         {visibleFields.includes("sr") && (
-                          <td className="px-6 py-4 font-semibold">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] font-semibold">
                             {startIndex + index + 1}
                           </td>
                         )}
 
                         {visibleFields.includes("itemCode") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
                               {item.itemCode || "-"}
                             </div>
@@ -802,7 +802,7 @@ const StockPurchaseDetails = () => {
                         )}
 
                         {visibleFields.includes("itemName") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
                               {item.itemName || "-"}
                             </div>
@@ -810,7 +810,7 @@ const StockPurchaseDetails = () => {
                         )}
 
                         {visibleFields.includes("openingStock") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="flex items-center gap-2">
                               <span
                                 className={`font-bold text-lg ${
@@ -845,22 +845,22 @@ const StockPurchaseDetails = () => {
                           </td>
                         )}
                         {visibleFields.includes("sellingPrice") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             €{item.sellingPrice ?? "-"}
                           </td>
                         )}
                         {visibleFields.includes("wholesalePrice") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             €{item.wholesalePrice ?? "-"}
                           </td>
                         )}
                         {visibleFields.includes("location") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             {item?.warehouseId?.warehouseAddress || "-"}
                           </td>
                         )}
                         {visibleFields.includes("minStock") && (
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             {item.minStockLevel || "-"}
                           </td>
                         )}

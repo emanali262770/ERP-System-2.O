@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,39 +25,67 @@ import {
   User,
   DollarSign,
   TrendingUp,
+  Loader,
 } from "lucide-react";
 import { toast } from "sonner";
-
-const mockSalesData = [
-  {
-    id: 1,
-    invoiceNo: "INV-001",
-    saleDate: "2025-10-18",
-    customerName: "John Doe",
-    quantitySold: 20,
-    salePrice: "€120",
-    marginProfit: "€20",
-  },
-  {
-    id: 2,
-    invoiceNo: "INV-002",
-    saleDate: "2025-10-25",
-    customerName: "Emma Smith",
-    quantitySold: 12,
-    salePrice: "€95",
-    marginProfit: "€15",
-  },
-];
+import { useAuth } from "../../context/AuthContext";
+import api from "../../Api/AxiosInstance";
+import Pagination from "../../components/Pagination";
+import SalesViewModal from "./Models/SalesViewModal ";
 
 const SalesHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
-  const filteredSales = mockSalesData.filter(
+  const [salesData, setSalesData] = useState([]);
+  const [summary, setSummary] = useState({
+    totalInvoices: 0,
+    totalSales: 0,
+    totalProfit: 0,
+  });
+  const [loading, setLoading] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedSale, setSelectedSale] = useState(null);
+
+  const { token } = useAuth();
+  // fetch sales history api
+  const fetchSalesHistory = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/inventory/sales-history", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.data.success) {
+        setSalesData(res.data.data);
+        setSummary(res.data.summary);
+      } else {
+        toast.error("Failed to fetch sales history");
+      }
+    } catch (error) {
+      console.error("Error fetching sales history:", error);
+      toast.error("Error fetching sales history");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchSalesHistory();
+  }, []);
+
+  // serach
+  const filteredSales = salesData.filter(
     (s) =>
-      s.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+      s.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentSales = filteredSales.slice(startIndex, endIndex);
 
   // Columns that will be shown by default
   const [visibleFields, setVisibleFields] = useState([
@@ -82,7 +110,15 @@ const SalesHistory = () => {
   };
   const handleEdit = (id) => toast.success(`Editing record #${id}`);
   const handleDelete = (id) => toast.error(`Deleting record #${id}`);
-  const handleView = (id) => toast.info(`Viewing details for record #${id}`);
+  const handleView = (id) => {
+    const sale = salesData.find((s) => s._id === id);
+    if (!sale) {
+      toast.error("Sale record not found!");
+      return;
+    }
+    setSelectedSale(sale);
+    setIsViewOpen(true);
+  };
 
   const handleCustomizeOpen = (open) => {
     setIsCustomizeOpen(open);
@@ -122,7 +158,7 @@ const SalesHistory = () => {
                   Total Invoices
                 </p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {mockSalesData.length}
+                  {summary.totalInvoices || 0}
                 </p>
               </div>
               <Package className="w-5 h-5 text-blue-600" />
@@ -136,14 +172,7 @@ const SalesHistory = () => {
                   Total Sales
                 </p>
                 <p className="text-2xl font-bold text-green-900">
-                  €
-                  {mockSalesData
-                    .reduce(
-                      (sum, s) =>
-                        sum + parseFloat(s.salePrice.replace(/[^\d.]/g, "")),
-                      0
-                    )
-                    .toLocaleString()}
+                  € {summary.totalSales || 0}
                 </p>
               </div>
               <TrendingUp className="w-5 h-5 text-green-600" />
@@ -157,14 +186,7 @@ const SalesHistory = () => {
                   Total Profit
                 </p>
                 <p className="text-2xl font-bold text-amber-900">
-                  €
-                  {mockSalesData
-                    .reduce(
-                      (sum, s) =>
-                        sum + parseFloat(s.marginProfit.replace(/[^\d.]/g, "")),
-                      0
-                    )
-                    .toLocaleString()}
+                  € {summary.totalProfit || 0}
                 </p>
               </div>
               <DollarSign className="w-5 h-5 text-amber-600" />
@@ -182,7 +204,10 @@ const SalesHistory = () => {
                 className="pl-12 pr-4 py-3 rounded-xl border-2 border-primary/20 focus:border-primary/50
                    bg-background/70 backdrop-blur-sm focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
           </CardContent>
@@ -218,7 +243,6 @@ const SalesHistory = () => {
               </div>
             </div>
           </CardHeader>
-
 
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -265,59 +289,96 @@ const SalesHistory = () => {
                 </thead>
 
                 <tbody className="divide-y divide-border/30">
-                  {filteredSales.map((s, index) => (
-                    <tr
-                      key={s.id}
-                      className="group hover:bg-primary/5 transition-all duration-300 ease-in-out"
-                    >
-                      {visibleFields.includes("sr") && (
-                        <td className="px-6 py-4 font-semibold">{index + 1}</td>
-                      )}
-                      {visibleFields.includes("invoiceNo") && (
-                        <td className="px-6 py-4 font-semibold">{s.invoiceNo}</td>
-                      )}
-                      {visibleFields.includes("saleDate") && (
-                        <td className="px-6 py-4">{s.saleDate}</td>
-                      )}
-                      {visibleFields.includes("customerName") && (
-                        <td className="px-6 py-4">{s.customerName}</td>
-                      )}
-                      {visibleFields.includes("quantitySold") && (
-                        <td className="px-6 py-4">{s.quantitySold}</td>
-                      )}
-                      {visibleFields.includes("salePrice") && (
-                        <td className="px-6 py-4 text-green-600 font-medium">{s.salePrice}</td>
-                      )}
-                      {visibleFields.includes("marginProfit") && (
-                        <td className="px-6 py-4 text-amber-600 font-medium">{s.marginProfit}</td>
-                      )}
-                      <td className="px-6 py-4 flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(s.id)}
-                          className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="8" className="py-12 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <Loader className="w-8 h-8 animate-spin text-primary mb-3" />
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredSales.length > 0 ? (
+                    currentSales.map((s, index) => (
+                      <tr
+                        key={s._id || index}
+                        className="group hover:bg-primary/5 transition-all duration-300 ease-in-out"
+                      >
+                        {visibleFields.includes("sr") && (
+                          <td className="px-6 py-4 font-semibold">
+                            {startIndex + index + 1}
+                          </td>
+                        )}
+                        {visibleFields.includes("invoiceNo") && (
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] font-semibold">
+                            <div className="font-mono text-sm font-semibold bg-primary/10 text-primary px-2 py-1 rounded-md border border-primary/20 inline-block">
+                              {s.invoiceNo || "-"}
+                            </div>
+                          </td>
+                        )}
+                        {visibleFields.includes("saleDate") && (
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                            {new Date(s.saleDate).toLocaleDateString() || "-"}
+                          </td>
+                        )}
+                        {visibleFields.includes("customerName") && (
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                            {s.customerName || "-"}
+                          </td>
+                        )}
+                        {visibleFields.includes("quantitySold") && (
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
+                            {s.quantitySold ?? "-"}
+                          </td>
+                        )}
+                        {visibleFields.includes("salePrice") && (
+                          <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] text-green-600 font-medium">
+                            €{s.salePrice || "-"}
+                          </td>
+                        )}
+                        {visibleFields.includes("marginProfit") && (
+                          <td
+                            className={`px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px] font-medium ${
+                              s.profit >= 0 ? "text-amber-600" : "text-red-600"
+                            }`}
+                          >
+                            €{s.profit ?? "-"}
+                          </td>
+                        )}
+                        <td className="px-6 py-4 flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleView(s._id)}
+                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="text-center py-12">
+                        <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                        <p className="text-muted-foreground font-medium text-lg">
+                          No sales records found
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Try adjusting your search terms or add a new sale
+                          entry
+                        </p>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-
-
-              {filteredSales.length === 0 && (
-                <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground font-medium text-lg">
-                    No sales records found
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Try adjusting your search terms or add a new sale entry
-                  </p>
-                </div>
-              )}
+              {/* Pagination Component */}
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredSales.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
             </div>
           </CardContent>
         </Card>
@@ -394,9 +455,12 @@ const SalesHistory = () => {
           </Button>
         </DialogContent>
       </Dialog>
-
-
-
+      {/* view moadl */}
+      <SalesViewModal
+        isOpen={isViewOpen}
+        onClose={setIsViewOpen}
+        sale={selectedSale}
+      />
     </DashboardLayout>
   );
 };

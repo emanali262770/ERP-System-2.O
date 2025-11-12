@@ -64,15 +64,15 @@ const InvoicePDFTemplate = React.forwardRef(({ invoice }, ref) => {
 
         {/* RIGHT: Receiver Info */}
         <div className="w-1/2 text-right leading-tight text-sm">
-          <h3 className="font-semibold">{invoice.customerName || "John Doe"}</h3>
+          <h3 className="font-semibold">
+            {invoice.customerName || "John Doe"}
+          </h3>
           <p>
             {invoice.customerCompany || "ABC Traders"}
             <br />
             {invoice.customerCountry || "France"}
             <br />
-            {invoice.vatNo && (
-              <span>VAT: {invoice.vatNo}</span>
-            )}
+            {invoice.vatNo && <span>VAT: {invoice.vatNo}</span>}
           </p>
         </div>
       </div>
@@ -124,19 +124,22 @@ const InvoicePDFTemplate = React.forwardRef(({ invoice }, ref) => {
         <div className="border rounded-md p-4">
           <h3 className="font-semibold text-blue-700 mb-2">Bank Details</h3>
           <p>
-            <strong>Bank:</strong> {invoice.bankDetails.bank}
+            <strong>Bank:</strong> {invoice.bankDetails?.bank || "—"}
           </p>
           <p>
-            <strong>Account Number:</strong> {invoice.bankDetails.accountNumber}
+            <strong>Account Number:</strong>{" "}
+            {invoice.bankDetails?.accountNumber || "—"}
           </p>
           <p>
-            <strong>Account Type:</strong> {invoice.bankDetails.accountType}
+            <strong>Account Type:</strong>{" "}
+            {invoice.bankDetails?.accountType || "—"}
           </p>
           <p>
-            <strong>Currency:</strong> {invoice.bankDetails.currency}
+            <strong>Currency:</strong> {invoice.bankDetails?.currency || "—"}
           </p>
           <p>
-            <strong>Payment Reference:</strong> {invoice.bankDetails.reference}
+            <strong>Payment Reference:</strong>{" "}
+            {invoice.bankDetails?.reference || "—"}
           </p>
         </div>
 
@@ -150,7 +153,7 @@ const InvoicePDFTemplate = React.forwardRef(({ invoice }, ref) => {
             <span>VAT</span>
             <span>{vatTotal.toLocaleString()} €</span>
           </div>
-         <div className="flex justify-between items-center bg-blue-900 text-white font-semibold h-10 pb-2 px-1 mt-3 rounded-md">
+          <div className="flex justify-between items-center bg-blue-900 text-white font-semibold h-10 pb-2 px-1 mt-3 rounded-md">
             <p className="inline-flex justify-center items-center">Total</p>
             <p className="inline-flex justify-center items-center">
               {grandTotal.toLocaleString()} €

@@ -580,7 +580,7 @@ const SupplierInformation = () => {
                 </p>
                 <p className="text-2xl font-bold text-amber-900">
                   {" "}
-                  € {summary.averagePurchasePrice || 0}
+                  € {summary.averagePurchasePrice.toFixed(0) || 0}
                 </p>
               </div>
               <CreditCard className="w-5 h-5 text-amber-600" />
@@ -757,7 +757,7 @@ const SupplierInformation = () => {
                           {s.numberOfOrders || 0}
                         </td>
                       )}
-                      <td className="px-6 py-4 flex items-center gap-1 whitespace-nowrap">
+                      <td className="px-6 py-4 flex items-center gap-4 whitespace-nowrap">
                         <Button
                           variant="ghost"
                           size="sm"

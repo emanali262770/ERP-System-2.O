@@ -48,11 +48,11 @@ const Login = () => {
         toast.error(res.data?.message || "Invalid credentials");
       }
     } catch (error) {
-      setTimeout(() => {
+   
         toast.error(
         error.response?.data?.message || "Something went wrong while logging in"
       );
-      }, 2000);
+    
       
     } finally {
       setLoading(false);
