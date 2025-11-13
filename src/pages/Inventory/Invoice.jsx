@@ -131,7 +131,7 @@ const Invoice = () => {
 
   // Add item to array
   const handleAddItem = () => {
-    if (!itemId || !description || !quantity || !unitPrice) {
+    if (!itemId || !quantity || !unitPrice) {
       toast.error("Please fill all item fields");
       return;
     }
@@ -468,7 +468,7 @@ const Invoice = () => {
                       <Input
                         value={invoiceNo}
                         readOnly
-                        className="border-2 bg-gray-100 cursor-not-allowed focus:ring-2 focus:ring-primary/20"
+                        className="border-2 bg-gray-100 cursor-not-allowed"
                       />
                     </div>
 
@@ -478,15 +478,14 @@ const Invoice = () => {
                         type="date"
                         value={invoiceDate}
                         onChange={(e) => setInvoiceDate(e.target.value)}
-                        className="border-2 focus:ring-2 focus:ring-primary/20"
+                        className="border-2"
                       />
                     </div>
                   </div>
 
-                 
-                  {/* Customer + VAT Number + VAT Regime */}
+                  {/* Customer + VAT Number */}
                   <div className="grid grid-cols-2 gap-4">
-                    {/* Customer Select */}
+                    {/* Customer */}
                     <div className="space-y-3">
                       <Label className="flex items-center gap-2">
                         <User className="w-4 h-4" /> Customer
@@ -501,7 +500,7 @@ const Invoice = () => {
                           value={selectedCustomer}
                           onValueChange={setSelectedCustomer}
                         >
-                          <SelectTrigger className=" border-2 focus:ring-2 focus:ring-primary/20">
+                          <SelectTrigger className="border-2">
                             <SelectValue placeholder="Select customer" />
                           </SelectTrigger>
 
@@ -522,25 +521,14 @@ const Invoice = () => {
                       )}
                     </div>
 
-                    {/* VAT Number + VAT Regime on same line */}
+                    {/* VAT NUMBER ONLY */}
                     <div className="space-y-1">
-                      <Label>VAT Number + VAT Regime</Label>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          value={customerVAT}
-                          readOnly
-                          className="border-2 bg-muted/50"
-                          placeholder="VAT Number"
-                        />
-
-                        <Input
-                          value={vatRegime}
-                          readOnly
-                          className="border-2 bg-muted/50"
-                          placeholder="VAT Regime"
-                        />
-                      </div>
+                      <Label>Customer VAT Number</Label>
+                      <Input
+                        value={customerVAT}
+                        readOnly
+                        className="border-2 bg-muted/50"
+                      />
                     </div>
                   </div>
 
@@ -548,39 +536,26 @@ const Invoice = () => {
                   <div className="mt-6 p-4 rounded-lg border bg-muted/30">
                     <h3 className="font-semibold mb-3">Add Item</h3>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Item</Label>
-                        <Select onValueChange={(v) => setItemId(v)}>
-                          <SelectTrigger className="border-2">
-                            <SelectValue placeholder="Select item" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="item001">
-                              Premium Vegetable Cooking Oil
-                            </SelectItem>
-                            <SelectItem value="item002">
-                              Office Chair
-                            </SelectItem>
-                            <SelectItem value="item003">
-                              Laptop Stand
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Description</Label>
-                        <Input
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          placeholder="Item description"
-                          className="border-2"
-                        />
-                      </div>
+                    {/* Item */}
+                    <div className="space-y-2">
+                      <Label>Item</Label>
+                      <Select onValueChange={(v) => setItemId(v)}>
+                        <SelectTrigger className="border-2">
+                          <SelectValue placeholder="Select item" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="item001">
+                            Premium Vegetable Cooking Oil
+                          </SelectItem>
+                          <SelectItem value="item002">Office Chair</SelectItem>
+                          <SelectItem value="item003">Laptop Stand</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
+                    {/* Qty - Price - VAT Type */}
                     <div className="grid grid-cols-3 gap-4 mt-4">
+                      {/* Quantity */}
                       <div className="space-y-2">
                         <Label>Quantity</Label>
                         <Input
@@ -591,6 +566,7 @@ const Invoice = () => {
                         />
                       </div>
 
+                      {/* Unit Price */}
                       <div className="space-y-2">
                         <Label>Unit Price</Label>
                         <Input
@@ -601,20 +577,56 @@ const Invoice = () => {
                         />
                       </div>
 
+                      {/* VAT TYPE */}
+                      <div className="space-y-2">
+                        <Label>VAT Type</Label>
+                        <Select
+                          value={vatRegime}
+                          onValueChange={(value) => {
+                            setVatRegime(value);
+
+                            if (value === "Exemption") setVatRate(0);
+                            if (value === "Local VAT") setVatRate(20);
+                            if (value === "Margin") setVatRate(0);
+                            if (value === "Non-local Individual") {
+                              const c = customerList.find(
+                                (x) => x._id === selectedCustomer
+                              );
+                              setVatRate(c?.defaultVatRate || 0);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="border-2">
+                            <SelectValue placeholder="Select VAT Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Exemption">
+                              Exemption (0%)
+                            </SelectItem>
+                            <SelectItem value="Local VAT">Local VAT</SelectItem>
+                            <SelectItem value="Margin">Margin</SelectItem>
+                            <SelectItem value="Non-local Individual">
+                              Non-local Individual (Customer VAT)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* VAT RATE & TOTALS */}
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      {/* VAT Rate */}
                       <div className="space-y-2">
                         <Label>VAT Rate (%)</Label>
                         <Input
                           type="number"
                           value={vatRate}
                           onChange={(e) => setVatRate(e.target.value)}
-                          placeholder="20"
                           className="border-2"
                         />
                       </div>
-                    </div>
 
-                    {/* Auto totals */}
-                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      {/* Total Excl VAT */}
                       <div className="space-y-2">
                         <Label>Total Excl. VAT</Label>
                         <Input
@@ -623,6 +635,8 @@ const Invoice = () => {
                           className="border-2 bg-gray-100"
                         />
                       </div>
+
+                      {/* VAT Amount */}
                       <div className="space-y-2">
                         <Label>VAT Amount</Label>
                         <Input
@@ -631,17 +645,19 @@ const Invoice = () => {
                           className="border-2 bg-gray-100"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Total Incl. VAT</Label>
-                        <Input
-                          value={totalInclVAT}
-                          readOnly
-                          className="border-2 bg-gray-100"
-                        />
-                      </div>
                     </div>
 
-                    {/* ADD ITEM BUTTON */}
+                    {/* Total Incl VAT */}
+                    <div className="space-y-2 mt-4">
+                      <Label>Total Incl. VAT</Label>
+                      <Input
+                        value={totalInclVAT}
+                        readOnly
+                        className="border-2 bg-gray-100"
+                      />
+                    </div>
+
+                    {/* Add Item */}
                     <Button
                       onClick={handleAddItem}
                       className="mt-4 w-full bg-primary text-white"
@@ -649,23 +665,23 @@ const Invoice = () => {
                       Add Item
                     </Button>
 
-                    {/* DISPLAY ADDED ITEMS */}
+                    {/* ITEMS LIST */}
                     {invoiceItems.length > 0 && (
                       <div className="mt-4 border rounded-lg p-3 bg-white">
                         <h4 className="font-semibold mb-3">Added Items</h4>
                         <table className="w-full border">
                           <thead className="bg-gray-100">
                             <tr>
-                              <th className="p-2 text-left">Description</th>
+                              <th className="p-2 text-left">Item</th>
                               <th className="p-2 text-left">Qty</th>
                               <th className="p-2 text-left">Price</th>
                               <th className="p-2 text-left">Total</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {invoiceItems.map((it, index) => (
-                              <tr key={index} className="border-t">
-                                <td className="p-2">{it.description}</td>
+                            {invoiceItems.map((it, i) => (
+                              <tr key={i} className="border-t">
+                                <td className="p-2">{it.itemId}</td>
                                 <td className="p-2">{it.quantity}</td>
                                 <td className="p-2">€{it.unitPrice}</td>
                                 <td className="p-2 font-semibold">
@@ -681,7 +697,7 @@ const Invoice = () => {
 
                   {/* SAVE BUTTON */}
                   <Button
-                    className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 py-3 text-base font-medium"
+                    className="w-full bg-gradient-to-r from-primary to-primary/90 py-3 text-base font-medium"
                     onClick={handleSaveInvoice}
                   >
                     Save Invoice

@@ -45,8 +45,28 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 
+
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+
+  // -------------------------------
+  // SETUP MODULE (MASTER DATA)
+  // -------------------------------
+  {
+    name: "Setup",
+    href: "/setup",
+    icon: Briefcase,
+    subNav: [
+      { name: "Customer Defination", href: "/setup/customer-defination", icon: User },
+      { name: "Supplier Information", href: "/setup/supplier-information", icon: Container },
+      { name: "WareHouse", href: "/setup/warehouse", icon: Warehouse },
+      { name: "Category", href: "/setup/category-fields", icon: Tag },
+    ],
+  },
+
+  // -------------------------------
+  // INVENTORY MODULE
+  // -------------------------------
   {
     name: "Inventory",
     href: "/inventory",
@@ -54,40 +74,48 @@ const navigation = [
     subNav: [
       { name: "Product", href: "/inventory/productinfo", icon: Box },
       { name: "Stock & Purchase", href: "/inventory/stock-purchase", icon: ShoppingBag },
-
-      { name: "Supplier Information", href: "/inventory/supplier-information", icon: Container },
-      { name: "Sales History", href: "/inventory/sales-history", icon: ClipboardList },
-      { name: "Transaction Traking", href: "/inventory/transaction-traking", icon: ArrowRightLeft },
-      { name: "WareHouse", href: "/inventory/warehouse", icon: Warehouse },
-
-      { name: "Invoice", href: "/inventory/invoice", icon: FileSpreadsheet },
-
-      { name: "Customer Defination", href: "/inventory/customer-defination", icon: User },
-
-      { name: "Category", href: "/inventory/category-fields", icon: Tag },
-
-
-
     ],
   },
+
+  // -------------------------------
+  // SALES MODULE
+  // -------------------------------
+  {
+    name: "Sales",
+    href: "/sales",
+    icon: ShoppingCart,
+    subNav: [
+      { name: "Invoice", href: "/sales/invoice", icon: FileSpreadsheet },
+      { name: "Sales History", href: "/sales/sales-history", icon: ClipboardList },
+      { name: "Transaction Traking", href: "/sales/transaction-traking", icon: ArrowRightLeft },
+    ],
+  },
+
+  // -------------------------------
+  // COMPANY MANAGEMENT (UNCHANGED)
+  // -------------------------------
   {
     name: "Company Management",
     href: "/company-management",
-    icon: Briefcase, // you can choose a suitable icon for the main parent
+    icon: Briefcase,
     subNav: [
       { name: "Manage Companies", href: "/company-management/manage-companies", icon: Edit },
       { name: "Company Switcher", href: "/company-management/company-switcher", icon: Building2 },
-      // { name: "Company Form", href: "/company-management/create-company-form", icon: Briefcase },
       { name: "Role Access", href: "/company-management/role-access-settings", icon: Key },
     ],
   },
+
+  // -------------------------------
+  // OTHER MODULES
+  // -------------------------------
+   { name: "Sales", href: "/sales-managment", icon: ShoppingCart },
   { name: "User Management", href: "/user-manegement", icon: User },
-  { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Consignment", href: "/consignment", icon: Truck },
   { name: "Barcode", href: "/barcode", icon: Barcode },
   { name: "Communication", href: "/communication", icon: MessageSquare },
   { name: "Reports", href: "/reports", icon: FileText },
 ];
+
 
 const DashboardLayout = ({ children }) => {
   const location = useLocation();

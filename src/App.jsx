@@ -44,38 +44,83 @@ const App = () => (
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/company-selection" element={<ProtectedRoute><CompanySelection /></ProtectedRoute>} />
+          <Route
+            path="/company-selection"
+            element={
+              <ProtectedRoute>
+                <CompanySelection />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Protected Routes (All use DashboardLayout inside their page) */}
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/sales" element={<Sales />} />
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* SALES MAIN ROUTE (Parent) */}
+          <Route path="/sales-managment" element={<Sales />} />
+
+          {/* SALES MODULE SUBPAGES */}
+          <Route path="/sales/invoice" element={<Invoice />} />
+          <Route path="/sales/sales-history" element={<SalesHistory />} />
+          <Route
+            path="/sales/transaction-traking"
+            element={<TransactionTracking />}
+          />
+
+          {/* SETUP MODULE ROUTES */}
+          <Route
+            path="/setup/customer-defination"
+            element={<CustomerDefination />}
+          />
+          <Route
+            path="/setup/supplier-information"
+            element={<SupplierInformation />}
+          />
+          <Route path="/setup/warehouse" element={<WareHouse />} />
+          <Route path="/setup/category-fields" element={<CategoryFields />} />
+
+          {/* INVENTORY MODULE ROUTES */}
+          <Route path="/inventory/productinfo" element={<ProductInfo />} />
+          <Route
+            path="/inventory/stock-purchase"
+            element={<StockPurchaseDetails />}
+          />
+
+          {/* Other Modules */}
           <Route path="/consignment" element={<Consignment />} />
           <Route path="/barcode" element={<Barcode />} />
           <Route path="/communication" element={<Communication />} />
           <Route path="/reports" element={<Reports />} />
 
-          {/* Inventory Pages – Direct, No Sidebar */}
-          <Route path="/inventory/productinfo" element={<ProductInfo />} />
-          <Route path="/inventory/stock-purchase" element={<StockPurchaseDetails />} />
-          <Route path="/inventory/supplier-information" element={<SupplierInformation />} />
-          <Route path="/inventory/sales-history" element={<SalesHistory />} />
-          <Route path="/inventory/transaction-traking" element={<TransactionTracking />} />
+          {/* Company Management */}
+          <Route
+            path="/company-management/manage-companies"
+            element={<ManageCompanies />}
+          />
+          <Route
+            path="/company-management/company-switcher"
+            element={<CompanySwitcher />}
+          />
+          <Route
+            path="/company-management/create-company-form"
+            element={<CreateCompanyForm />}
+          />
+          <Route
+            path="/company-management/role-access-settings"
+            element={<RoleAccessSettings />}
+          />
 
-          <Route path="/inventory/invoice" element={<Invoice />} />
-
-          <Route path="/inventory/customer-defination" element={<CustomerDefination />} />
-          <Route path="/inventory/category-fields" element={<CategoryFields />} />
-
-
-          {/* Company Management Pages */}
-          <Route path="/company-management/manage-companies" element={<ManageCompanies />} />
-          <Route path="/company-management/company-switcher" element={<CompanySwitcher />} />
-          <Route path="/company-management/create-company-form" element={<CreateCompanyForm />} />
-          <Route path="/company-management/role-access-settings" element={<RoleAccessSettings />} />
-          {/* user Mangement */}
+          {/* User Management */}
           <Route path="/user-manegement" element={<UserManegement />} />
 
-          <Route path="/inventory/warehouse" element={<WareHouse />} />
+          {/* Auth */}
           <Route path="/signup" element={<Signup />} />
 
           {/* Fallback */}
