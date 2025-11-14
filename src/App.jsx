@@ -12,23 +12,23 @@ import Consignment from "./pages/Consignment";
 import Barcode from "./pages/Barcode";
 import Communication from "./pages/Communication";
 import NotFound from "./pages/NotFound";
-import WareHouse from "./pages/Inventory/WareHouse";
+import WareHouse from "./pages/Setup/WareHouse";
 import Signup from "./pages/SignUpPage";
 // Direct Inventory Pages (No Sidebar or Layout)
 import ProductInfo from "./pages/Inventory/ProductInfo";
 import StockPurchaseDetails from "./pages/Inventory/StockPurchaseDetails";
 import UserManegement from "./pages/UserManegement/UserManegement";
-import SupplierInformation from "./pages/Inventory/SupplierInformation";
+import SupplierInformation from "./pages/Setup/SupplierInformation";
 import SalesHistory from "./pages/Inventory/SalesHistory";
 import TransactionTracking from "./pages/Inventory/TransactionTracking";
-import CustomerDefination from "./pages/Inventory/CustomerDefination";
+import CustomerDefination from "./pages/Setup/CustomerDefination";
 import CategoryFields from "./pages/Setup/CategoryFields";
 // Company Management Pages
 import ManageCompanies from "./pages/CompanyManagement/ManageCompanies";
 import CompanySwitcher from "./pages/CompanyManagement/CompanySwitcher";
 import CreateCompanyForm from "./pages/CompanyManagement/CreateCompanyForm";
 import RoleAccessSettings from "./pages/CompanyManagement/RoleAccessSettings";
-import Invoice from "./pages/SalesInvoiceSection/Invoice";
+import Invoice from "./pages/Inventory/Invoice";
 import ProtectedRoute from "./context/ProtectedRoute";
 import DrafTrack from "./pages/Inventory/DrafTrack";
 import CustomerLedgerReport from "./pages/Reports/CustomerLedgerReport";

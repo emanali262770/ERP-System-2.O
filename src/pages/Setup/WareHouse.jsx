@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import WarehouseViewModal from "./Models/WareHouseModal";
+import WarehouseViewModal from "../Inventory/Models/WareHouseModal";
 import {
   Dialog,
   DialogContent,

@@ -27,9 +27,9 @@ import {
   Key,
 
   Tag,
-
-  FileSpreadsheet 
-
+NotepadTextDashed ,
+  FileSpreadsheet ,
+BookOpenText 
 } from "lucide-react";
 import { ClipboardList, ArrowRightLeft } from "lucide-react";
 
@@ -44,25 +44,18 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+const parentMap = {
+  "/setup": "Setup",
+  "/inventory": "Inventory",
+  "/sales": "Sales",
+  "/company-management": "Company Management",
+  "/reports": "Reports",
+};
 
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
 
-  // -------------------------------
-  // SETUP MODULE (MASTER DATA)
-  // -------------------------------
-  {
-    name: "Setup",
-    href: "/setup",
-    icon: Briefcase,
-    subNav: [
-      { name: "Customer Defination", href: "/setup/customer-defination", icon: User },
-      { name: "Supplier Information", href: "/setup/supplier-information", icon: Container },
-      { name: "WareHouse", href: "/setup/warehouse", icon: Warehouse },
-      { name: "Category", href: "/setup/category-fields", icon: Tag },
-    ],
-  },
 
   // -------------------------------
   // INVENTORY MODULE
@@ -74,6 +67,7 @@ const navigation = [
     subNav: [
       { name: "Product", href: "/inventory/productinfo", icon: Box },
       { name: "Stock & Purchase", href: "/inventory/stock-purchase", icon: ShoppingBag },
+      { name: "Draft Track", href: "/inventory/draft-track", icon: NotepadTextDashed },
     ],
   },
 
@@ -81,13 +75,28 @@ const navigation = [
   // SALES MODULE
   // -------------------------------
   {
-    name: "Purchase Invoices",
+    name: "Sales",
     href: "/sales",
     icon: ShoppingCart,
     subNav: [
-      { name: "Invoice", href: "/sales/invoice", icon: FileSpreadsheet },
+      { name: "Sales Invoice", href: "/sales/invoice", icon: FileSpreadsheet },
       { name: "Sales History", href: "/sales/sales-history", icon: ClipboardList },
       { name: "Transaction Traking", href: "/sales/transaction-traking", icon: ArrowRightLeft },
+    ],
+  },
+
+   // -------------------------------
+  // SETUP MODULE (MASTER DATA)
+  // -------------------------------
+  {
+    name: "Setup",
+    href: "/setup",
+    icon: Briefcase,
+    subNav: [
+      { name: "Customer Defination", href: "/setup/customer-defination", icon: User },
+      { name: "Supplier Information", href: "/setup/supplier-information", icon: Container },
+      { name: "WareHouse", href: "/setup/warehouse", icon: Warehouse },
+      { name: "Category", href: "/setup/category-fields", icon: Tag },
     ],
   },
 
@@ -108,12 +117,21 @@ const navigation = [
   // -------------------------------
   // OTHER MODULES
   // -------------------------------
-  //  { name: "Sales", href: "/sales-managment", icon: ShoppingCart },
+   { name: "Sales", href: "/sales-managment", icon: ShoppingCart },
   { name: "User Management", href: "/user-manegement", icon: User },
   { name: "Consignment", href: "/consignment", icon: Truck },
   { name: "Barcode", href: "/barcode", icon: Barcode },
   { name: "Communication", href: "/communication", icon: MessageSquare },
-  { name: "Reports", href: "/reports", icon: FileText },
+   {
+    name: "Reports",
+    href: "/reports",
+    icon: FileText,
+    subNav: [
+      { name: "Customer Ledger", href: "/reports/customer-ledger", icon: BookOpenText   },
+      { name: "Supplier Ledger", href: "/reports/supplier-ledger", icon: BookOpenText  },
+     
+    ],
+  },
 ];
 
 
@@ -128,14 +146,19 @@ const { logout } = useAuth();
   const isInventoryActive = location.pathname.startsWith("/inventory");
   const isCompanyManagementActive = location.pathname.startsWith("/company-management");
 
-  useEffect(() => {
-    if (isInventoryActive) {
-      setOpenSubNav((prev) => ({ ...prev, Inventory: true }));
-    }
-    if (isCompanyManagementActive) {
-      setOpenSubNav((prev) => ({ ...prev, "Company Management": true }));
-    }
-  }, [isInventoryActive, isCompanyManagementActive]);
+useEffect(() => {
+  // find which parent menu matches the current route
+  const matchedParent = Object.keys(parentMap).find((key) =>
+    location.pathname.startsWith(key)
+  );
+
+  if (matchedParent) {
+    setOpenSubNav((prev) => ({
+      ...prev,
+      [parentMap[matchedParent]]: true,
+    }));
+  }
+}, [location.pathname]);
 
   const handleLogout = () => {
     logout();
