@@ -27,7 +27,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../Api/AxiosInstance";
-import SupplierViewModal from "./Models/SupplierViewModal";
+import SupplierViewModal from "../Inventory/Models/SupplierViewModal";
 import Pagination from "../../components/Pagination";
 
 const SupplierInformation = () => {
