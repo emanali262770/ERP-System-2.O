@@ -10,6 +10,8 @@ import {
   Loader,
   Calendar,
   User,
+  Globe,
+  Phone,
 } from "lucide-react";
 
 const InvoiceViewModal = ({ isOpen, onClose, invoice }) => {
@@ -38,39 +40,62 @@ const InvoiceViewModal = ({ isOpen, onClose, invoice }) => {
 
             {/* ==== Summary Info ==== */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm sm:text-base">
+
+              {/* Customer Name */}
               <p className="font-medium text-muted-foreground">Customer Name:</p>
               <p className="font-semibold flex items-center gap-2">
                 <User className="w-4 h-4 text-primary" />
-                {invoice.customerName || "—"}
+                {invoice.customer?.customerName || "—"}
               </p>
 
+              {/* Customer Phone */}
+              <p className="font-medium text-muted-foreground">Phone:</p>
+              <p className="font-semibold flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                {invoice.customer?.phoneNumber || "—"}
+              </p>
+
+              {/* Customer Country */}
+              <p className="font-medium text-muted-foreground">Country:</p>
+              <p className="font-semibold flex items-center gap-2">
+                <Globe className="w-4 h-4 text-primary" />
+                {invoice.customer?.country || "—"}
+              </p>
+
+              {/* VAT Number */}
               <p className="font-medium text-muted-foreground">Customer VAT:</p>
               <p className="font-semibold">{invoice.customerVAT || "—"}</p>
 
+              {/* VAT Regime */}
               <p className="font-medium text-muted-foreground">VAT Regime:</p>
-              <p className="font-semibold">{invoice.vatRegime || "—"}</p>
+              <p className="font-semibold">
+                {invoice.items?.[0]?.vatRegime || "—"}
+              </p>
 
+              {/* Net Total */}
               <p className="font-medium text-muted-foreground">Net Total:</p>
               <p className="font-semibold text-green-700">
                 € {invoice.netTotal?.toLocaleString() ?? 0}
               </p>
 
+              {/* VAT Amount */}
               <p className="font-medium text-muted-foreground">VAT Amount:</p>
               <p className="font-semibold text-amber-700">
                 € {invoice.vatTotal?.toLocaleString() ?? 0}
               </p>
 
+              {/* Grand Total */}
               <p className="font-medium text-muted-foreground">Grand Total:</p>
               <p className="font-semibold text-blue-700">
                 € {invoice.grandTotal?.toLocaleString() ?? 0}
               </p>
 
+              {/* Amount Due */}
               <p className="font-medium text-muted-foreground">Amount Due:</p>
               <p className="font-semibold text-red-700">
                 € {invoice.amountDue?.toLocaleString() ?? 0}
               </p>
 
-             
             </div>
 
             {/* ==== Item Table ==== */}
@@ -86,12 +111,13 @@ const InvoiceViewModal = ({ isOpen, onClose, invoice }) => {
                       <tr>
                         <th className="px-4 py-3">#</th>
                         <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3 ">Qty</th>
-                        <th className="px-4 py-3 ">Unit Price (€)</th>
-                        <th className="px-4 py-3 ">VAT (%)</th>
-                        <th className="px-4 py-3 ">Total (€)</th>
+                        <th className="px-4 py-3">Qty</th>
+                        <th className="px-4 py-3">Unit Price (€)</th>
+                        <th className="px-4 py-3">VAT (%)</th>
+                        <th className="px-4 py-3">Total (€)</th>
                       </tr>
                     </thead>
+
                     <tbody>
                       {invoice.items.map((item, idx) => (
                         <tr
@@ -99,18 +125,23 @@ const InvoiceViewModal = ({ isOpen, onClose, invoice }) => {
                           className="border-t border-border/30 hover:bg-muted/10 transition-colors"
                         >
                           <td className="px-4 py-2">{idx + 1}</td>
+
                           <td className="px-4 py-2 font-medium text-foreground">
                             {item.description}
                           </td>
-                          <td className="px-4 py-2 ">{item.quantity}</td>
-                          <td className="px-4 py-2 ">
-                            {item.unitPrice.toLocaleString()}
+
+                          <td className="px-4 py-2">{item.quantity}</td>
+
+                          <td className="px-4 py-2">
+                            {item.unitPrice?.toLocaleString()}
                           </td>
-                          <td className="px-4 py-2 ">
+
+                          <td className="px-4 py-2">
                             {(item.vatRate * 100).toFixed(0)}
                           </td>
-                          <td className="px-4 py-2  font-semibold">
-                            {item.totalInclVAT.toLocaleString()}
+
+                          <td className="px-4 py-2 font-semibold">
+                            {item.totalInclVAT?.toLocaleString()}
                           </td>
                         </tr>
                       ))}

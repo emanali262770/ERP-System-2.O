@@ -117,7 +117,7 @@ const CustomerDefinition = () => {
   const filteredCustomers = customerList.filter(
     (customer) =>
       customer.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.customerType.toLowerCase().includes(searchTerm.toLowerCase())
@@ -131,27 +131,11 @@ const CustomerDefinition = () => {
 
   const handleDownload = () => toast.success("Customer report downloaded!");
 
-  // Loader
-  const TableLoader = ({ message = "Loading...", colSpan = 6 }) => {
-    return (
-      <tr>
-        <td colSpan={colSpan} className="py-20 text-center">
-          <div className="flex flex-col items-center justify-center">
-            <Loader className="w-10 h-10 text-primary animate-spin mb-2" />
-            <p className="text-sm text-muted-foreground font-medium">
-              {message}
-            </p>
-          </div>
-        </td>
-      </tr>
-    );
-  };
-
   // For Customize Popup
   const [visibleFields, setVisibleFields] = useState([
     "sr",
     "customerName",
-    "contactPerson",
+    "phoneNumber",
     "email",
     "country",
     "customerType",
@@ -166,14 +150,14 @@ const CustomerDefinition = () => {
     try {
       setLoading(true);
       const response = await api.get("/customers");
-      console.log("Res", response.data);
+    console.log("Res", response.data);
 
       if (response.data.success && Array.isArray(response.data.data)) {
         const formattedData = response.data.data.map((item) => ({
           id: item._id,
           customerCode: item.customerCode || "-",
           customerName: item.customerName || "-",
-          contactPerson: item.contactPerson || "-",
+          phoneNumber: item.phoneNumber || "-",
           email: item.email || "-",
           billingAddress: item.billingAddress || "-",
           country: item.country || "-",
@@ -195,7 +179,10 @@ const CustomerDefinition = () => {
           customerLocations: response.data.summary?.customerLocations || 0,
         });
       } else {
-        console.warn("Warning: Unexpected API response structure:", response.data);
+        console.warn(
+          "Warning: Unexpected API response structure:",
+          response.data
+        );
         setCustomerList([]);
         setSummary({
           totalCustomers: 0,
@@ -216,7 +203,7 @@ const CustomerDefinition = () => {
       setTimeout(() => setLoading(false), 1500);
     }
   }, []);
-
+  console.log("Res", customerList);
   useEffect(() => {
     fetchCustomerList();
   }, [fetchCustomerList]);
@@ -247,7 +234,7 @@ const CustomerDefinition = () => {
   const [newCustomer, setNewCustomer] = useState({
     customerCode: "",
     customerName: "",
-    contactPerson: "",
+    phoneNumber: "",
     email: "",
     billingAddress: "",
     country: "",
@@ -264,7 +251,7 @@ const CustomerDefinition = () => {
     setNewCustomer({
       customerCode: "",
       customerName: "",
-      contactPerson: "",
+      phoneNumber: "",
       email: "",
       billingAddress: "",
       country: "",
@@ -285,7 +272,7 @@ const CustomerDefinition = () => {
       const payload = {
         customerCode: newCustomer.customerCode,
         customerName: newCustomer.customerName,
-        phoneNumber: newCustomer.contactPerson,
+        phoneNumber: newCustomer.phoneNumber,
         email: newCustomer.email,
         billingAddress: newCustomer.billingAddress,
         country: newCustomer.country,
@@ -335,11 +322,12 @@ const CustomerDefinition = () => {
   const handleEdit = (id) => {
     const customer = customerList.find((c) => c.id === id);
     if (!customer) return toast.error("Customer not found!");
+    console.log(customer);
 
     setNewCustomer({
       customerCode: customer.customerCode,
       customerName: customer.customerName,
-      contactPerson: customer.contactPerson,
+      phoneNumber: customer.phoneNumber,
       email: customer.email,
       billingAddress: customer.billingAddress,
       country: customer.country,
@@ -419,7 +407,7 @@ const CustomerDefinition = () => {
                   Add Customer
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+              <DialogContent className="max-w-2xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
                 <DialogHeader className="border-b border-border/50 pb-4">
                   <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
                     <Plus className="w-5 h-5 text-primary" />
@@ -470,12 +458,11 @@ const CustomerDefinition = () => {
                         value={newCustomer.phoneNumber || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          if (/^\d*$/.test(value)) {
-                            setNewCustomer({
-                              ...newCustomer,
-                              phoneNumber: value,
-                            });
-                          }
+                          const cleaned = value.replace(/[^0-9+\-\s]/g, "");
+                          setNewCustomer({
+                            ...newCustomer,
+                            phoneNumber: cleaned,
+                          });
                         }}
                         className="border-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
@@ -639,8 +626,8 @@ const CustomerDefinition = () => {
                         ? "Updating..."
                         : "Saving..."
                       : editingCustomer
-                        ? "Update Customer"
-                        : "Save Customer"}
+                      ? "Update Customer"
+                      : "Save Customer"}
                   </Button>
                 </div>
               </DialogContent>
@@ -658,7 +645,9 @@ const CustomerDefinition = () => {
                   <p className="text-sm font-medium text-blue-700">
                     Total Customers
                   </p>
-                  <p className="text-2xl font-bold text-blue-900">{summary.totalCustomers}</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {summary.totalCustomers}
+                  </p>
                 </div>
                 <div className="p-2 bg-blue-500/10 rounded-lg">
                   <Users className="w-5 h-5 text-blue-600" />
@@ -675,7 +664,9 @@ const CustomerDefinition = () => {
                   <p className="text-sm font-medium text-green-700">
                     New Customers (This Month)
                   </p>
-                  <p className="text-2xl font-bold text-green-900">{summary.newCustomers}</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {summary.newCustomers}
+                  </p>
                 </div>
                 <div className="p-2 bg-green-500/10 rounded-lg">
                   <UserPlus className="w-5 h-5 text-green-600" />
@@ -765,169 +756,187 @@ const CustomerDefinition = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
-         <table className="w-full">
-  <thead className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/50">
-    <tr>
-      {visibleFields.includes("sr") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          Sr
-        </th>
-      )}
-      {visibleFields.includes("customerName") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          Customer Name
-        </th>
-      )}
-      {visibleFields.includes("phoneNumber") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          Phone Number
-        </th>
-      )}
-      {visibleFields.includes("email") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          Email
-        </th>
-      )}
-      {visibleFields.includes("country") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          Country
-        </th>
-      )}
-      {visibleFields.includes("customerType") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          Customer Type
-        </th>
-      )}
-      {visibleFields.includes("vatNumber") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          VAT Number
-        </th>
-      )}
-      {visibleFields.includes("vatRegime") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          VAT Regime
-        </th>
-      )}
-      {visibleFields.includes("vatRate") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          VAT Rate (%)
-        </th>
-      )}
-      {visibleFields.includes("paymentTerms") && (
-        <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
-          Payment Terms
-        </th>
-      )}
-      <th className="px-6 py-4 text-center whitespace-nowrap text-sm font-semibold uppercase tracking-wider w-[120px]">
-        Actions
-      </th>
-    </tr>
-  </thead>
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/50">
+                <tr>
+                  {visibleFields.includes("sr") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      Sr
+                    </th>
+                  )}
+                  {visibleFields.includes("customerName") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      Customer Name
+                    </th>
+                  )}
+                  {visibleFields.includes("phoneNumber") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      Phone Number
+                    </th>
+                  )}
+                  {visibleFields.includes("email") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      Email
+                    </th>
+                  )}
+                  {visibleFields.includes("country") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      Country
+                    </th>
+                  )}
+                  {visibleFields.includes("customerType") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      Customer Type
+                    </th>
+                  )}
+                  {visibleFields.includes("vatNumber") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      VAT Number
+                    </th>
+                  )}
+                  {visibleFields.includes("vatRegime") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      VAT Regime
+                    </th>
+                  )}
+                  {visibleFields.includes("vatRate") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      VAT Rate (%)
+                    </th>
+                  )}
+                  {visibleFields.includes("paymentTerms") && (
+                    <th className="px-6 py-4 text-left whitespace-nowrap text-sm font-semibold uppercase tracking-wider">
+                      Payment Terms
+                    </th>
+                  )}
+                  <th className="px-6 py-4 text-center whitespace-nowrap text-sm font-semibold uppercase tracking-wider w-[120px]">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
 
-  {loading ? (
-    <tbody>
-      <tr>
-        <td
-          colSpan={visibleFields.length + 1}
-          className="py-20 text-center"
-        >
-          <div className="flex flex-col items-center justify-center">
-            <Loader className="w-10 h-10 text-primary animate-spin mb-2" />
-            <p className="text-sm text-muted-foreground font-medium">
-              Fetching customers...
-            </p>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  ) : (
-    <tbody className="divide-y divide-border/30">
-      {currentCustomers.map((c, index) => (
-        <tr
-          key={c.id}
-          className="group hover:bg-primary/5 transition-all duration-300 ease-in-out transform hover:scale-[1.002]"
-        >
-          {visibleFields.includes("sr") && (
-            <td className="px-6 py-4 whitespace-nowrap font-semibold">
-              {indexOfFirstItem + index + 1}
-            </td>
-          )}
+              {loading ? (
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan={visibleFields.length + 1}
+                      className="py-20 text-center"
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <Loader className="w-10 h-10 text-primary animate-spin mb-2" />
+                        <p className="text-sm text-muted-foreground font-medium">
+                          Fetching customers...
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody className="divide-y divide-border/30">
+                  {currentCustomers.map((c, index) => (
+                    <tr
+                      key={c.id}
+                      className="group hover:bg-primary/5 transition-all duration-300 ease-in-out transform hover:scale-[1.002]"
+                    >
+                      {visibleFields.includes("sr") && (
+                        <td className="px-6 py-4 whitespace-nowrap font-semibold">
+                          {indexOfFirstItem + index + 1}
+                        </td>
+                      )}
 
-          {visibleFields.includes("customerName") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.customerName}</td>
-          )}
+                      {visibleFields.includes("customerName") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.customerName}
+                        </td>
+                      )}
 
-          {/* FIXED — replaced contactPerson with phoneNumber */}
-          {visibleFields.includes("phoneNumber") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.phoneNumber}</td>
-          )}
+                      {/* FIXED — replaced contactPerson with phoneNumber */}
+                      {visibleFields.includes("phoneNumber") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.phoneNumber}
+                        </td>
+                      )}
 
-          {visibleFields.includes("email") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.email}</td>
-          )}
+                      {visibleFields.includes("email") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.email}
+                        </td>
+                      )}
 
-          {visibleFields.includes("country") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.country}</td>
-          )}
+                      {visibleFields.includes("country") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.country}
+                        </td>
+                      )}
 
-          {visibleFields.includes("customerType") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.customerType}</td>
-          )}
+                      {visibleFields.includes("customerType") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.customerType}
+                        </td>
+                      )}
 
-          {visibleFields.includes("vatNumber") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.vatNumber}</td>
-          )}
+                      {visibleFields.includes("vatNumber") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.vatNumber}
+                        </td>
+                      )}
 
-          {visibleFields.includes("vatRegime") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.vatRegime}</td>
-          )}
+                      {visibleFields.includes("vatRegime") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.vatRegime}
+                        </td>
+                      )}
 
-          {visibleFields.includes("vatRate") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.defaultVatRate}%</td>
-          )}
+                      {visibleFields.includes("vatRate") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.defaultVatRate}%
+                        </td>
+                      )}
 
-          {visibleFields.includes("paymentTerms") && (
-            <td className="px-6 py-4 whitespace-nowrap">{c.paymentTerms}</td>
-          )}
+                      {visibleFields.includes("paymentTerms") && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {c.paymentTerms}
+                        </td>
+                      )}
 
-          <td className="px-6 py-4 whitespace-nowrap">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleView(c.id)}
-                className="h-8 w-8 p-0 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-all duration-200 rounded-lg"
-                title="View Customer"
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleView(c.id)}
+                            className="h-8 w-8 p-0 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-all duration-200 rounded-lg"
+                            title="View Customer"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleEdit(c.id)}
-                className="h-8 w-8 p-0 hover:bg-green-50 text-gray-600 hover:text-green-700 transition-all duration-200 rounded-lg"
-                title="Edit Customer"
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(c.id)}
+                            className="h-8 w-8 p-0 hover:bg-green-50 text-gray-600 hover:text-green-700 transition-all duration-200 rounded-lg"
+                            title="Edit Customer"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(c.id)}
-                className="h-8 w-8 p-0 hover:bg-red-50 text-gray-600 hover:text-red-700 transition-all duration-200 rounded-lg"
-                title="Delete Customer"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  )}
-</table>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(c.id)}
+                            className="h-8 w-8 p-0 hover:bg-red-50 text-gray-600 hover:text-red-700 transition-all duration-200 rounded-lg"
+                            title="Delete Customer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
 
             {filteredCustomers.length > itemsPerPage && (
               <Pagination

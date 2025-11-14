@@ -1,15 +1,8 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, Loader, Users } from "lucide-react";
+import { Eye, Loader } from "lucide-react";
 
-const CustomerViewModal = ({ isOpen, onClose, customer, categoryList }) => {
-
-    // Helper to get category name
-    const getCategoryName = (categoryId) => {
-        const category = categoryList.find(cat => String(cat.id) === String(categoryId));
-        return category ? category.name : "-";
-    };
-
+const CustomerViewModal = ({ isOpen, onClose, customer }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-lg sm:max-w-xl w-[95vw] bg-background/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl overflow-y-auto max-h-[90vh]">
@@ -22,7 +15,7 @@ const CustomerViewModal = ({ isOpen, onClose, customer, categoryList }) => {
 
                 {customer ? (
                     <div className="space-y-5 pt-4">
-                        {/* Info Grid */}
+                        
                         <div className="space-y-3 text-sm sm:text-base px-1 sm:px-2">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
 
@@ -32,8 +25,8 @@ const CustomerViewModal = ({ isOpen, onClose, customer, categoryList }) => {
                                 <p className="font-medium text-muted-foreground">Customer Name:</p>
                                 <p className="font-semibold">{customer.customerName}</p>
 
-                                <p className="font-medium text-muted-foreground">Contact Person:</p>
-                                <p className="font-semibold">{customer.contactPerson}</p>
+                                <p className="font-medium text-muted-foreground">Phone Number:</p>
+                                <p className="font-semibold">{customer.phoneNumber}</p>
 
                                 <p className="font-medium text-muted-foreground">Email:</p>
                                 <p className="font-semibold break-all">{customer.email}</p>
