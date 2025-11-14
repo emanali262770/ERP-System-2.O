@@ -855,7 +855,7 @@ const CustomerDefinition = () => {
                         <td className="px-6 py-4">{c.customerName}</td>
                       )}
                       {visibleFields.includes("contactPerson") && (
-                        <td className="px-6 py-4">{c.contactPerson}</td>
+                        <td className="px-6 py-4">{c.phoneNumber}</td>
                       )}
                       {visibleFields.includes("email") && (
                         <td className="px-6 py-4">{c.email}</td>
