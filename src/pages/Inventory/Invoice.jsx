@@ -73,6 +73,7 @@ const Invoice = () => {
 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [editingInvoiceId, setEditingInvoiceId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -133,7 +134,6 @@ const Invoice = () => {
       });
 
       if (res.data.success) {
-
         setItemsList(res.data.data || []);
       } else {
         toast.error("Failed to fetch items");
@@ -161,7 +161,7 @@ const Invoice = () => {
       quantity: Number(quantity),
       unitPrice: Number(unitPrice),
       vatRegime: vatRegime,
-      vatRate: Number(vatRate) / 100, // Convert percentage to decimal (20% → 0.20)
+      vatRate: Number(vatRate) / 100,
       totalExclVAT,
       vatAmount,
       totalInclVAT,
@@ -180,6 +180,14 @@ const Invoice = () => {
     setTotalInclVAT(0);
 
     toast.success("Item added");
+  };
+
+  // Remove item from array
+  const handleRemoveItem = (index) => {
+    const updatedItems = [...invoiceItems];
+    updatedItems.splice(index, 1);
+    setInvoiceItems(updatedItems);
+    toast.success("Item removed");
   };
 
   // fetch invoice
@@ -220,8 +228,8 @@ const Invoice = () => {
 
   // Auto-generate invoice number based on highest existing number
   useEffect(() => {
-    if (!isEditMode) {
-      if (invoiceData.length > 0) {
+    if (!isEditMode && isAddOpen) {
+      if (status === "Final" && invoiceData.length > 0) {
         const maxNo = Math.max(
           ...invoiceData.map((inv) => {
             const match = inv.invoiceNo?.match(/INV-(\d+)/);
@@ -230,10 +238,10 @@ const Invoice = () => {
         );
         setInvoiceNo(`INV-${(maxNo + 1).toString().padStart(3, "0")}`);
       } else {
-        setInvoiceNo("INV-001");
+        setInvoiceNo("INV-DRAFT");
       }
     }
-  }, [invoiceData, isAddOpen, isEditMode]);
+  }, [invoiceData, isAddOpen, isEditMode, status]);
 
   // fetch customers
   const fetchCustomers = async () => {
@@ -274,6 +282,171 @@ const Invoice = () => {
     }
   }, [selectedCustomer, customerList]);
 
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!isAddOpen) {
+      // Reset all form states
+      setInvoiceItems([]);
+      setSelectedCustomer("");
+      setCustomerVAT("");
+      setVatRegime("");
+      setStatus("Draft");
+      setItemId("");
+      setDescription("");
+      setQuantity("");
+      setUnitPrice("");
+      setVatRate("");
+      setTotalExclVAT(0);
+      setVatAmount(0);
+      setTotalInclVAT(0);
+      setIsEditMode(false);
+      setEditingInvoiceId(null);
+      setInvoiceDate(new Date().toISOString().split("T")[0]);
+    }
+  }, [isAddOpen]);
+
+  // Handle Edit Invoice
+  const handleEdit = async (invoice) => {
+    try {
+      setIsEditMode(true);
+      setEditingInvoiceId(invoice._id);
+      
+      // Populate form with existing invoice data
+      setSelectedCustomer(invoice.customer?._id || invoice.customer);
+      setCustomerVAT(invoice.customerVAT || "");
+      setVatRegime(invoice.items?.[0]?.vatRegime || "");
+      setStatus(invoice.status || "Draft");
+      setInvoiceDate(invoice.invoiceDate?.split('T')[0] || new Date().toISOString().split("T")[0]);
+      
+      // Set invoice items
+      if (invoice.items && invoice.items.length > 0) {
+        const formattedItems = invoice.items.map(item => ({
+          itemId: item.itemId,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          vatRegime: item.vatRegime,
+          vatRate: item.vatRate,
+          totalExclVAT: item.quantity * item.unitPrice,
+          vatAmount: (item.quantity * item.unitPrice * item.vatRate),
+          totalInclVAT: item.quantity * item.unitPrice * (1 + item.vatRate)
+        }));
+        setInvoiceItems(formattedItems);
+      }
+
+      setInvoiceNo(invoice.invoiceNo || "INV-DRAFT");
+      setIsAddOpen(true);
+    } catch (error) {
+      console.error("Error setting up edit:", error);
+      toast.error("Error loading invoice for editing");
+    }
+  };
+
+  // Handle Update Invoice
+  const handleUpdateInvoice = async () => {
+    if (!selectedCustomer) {
+      toast.error("Please select a customer");
+      return;
+    }
+
+    if (invoiceItems.length === 0) {
+      toast.error("Please add at least one item");
+      return;
+    }
+
+    try {
+      const payload = {
+        status: status,
+        companyCode: "VE",
+        invoiceDate: invoiceDate,
+        customer: selectedCustomer,
+        items: invoiceItems.map(item => ({
+          itemId: item.itemId,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          vatRegime: vatRegime,
+          vatRate: item.vatRate
+        }))
+      };
+
+      console.log("Updating invoice:", payload);
+
+      const response = await api.put(`/inventory/invoice/draft/${editingInvoiceId}`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+
+      if (response.data.success) {
+        toast.success("Invoice updated successfully!");
+        setIsAddOpen(false);
+        fetchInvoices();
+      } else {
+        toast.error(response.data.message || "Failed to update invoice");
+      }
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      toast.error(error.response?.data?.message || "Error updating invoice");
+    }
+  };
+
+  // Handle Finalize Invoice
+  const handleFinalizeInvoice = async (invoiceId) => {
+    try {
+      toast.loading("Finalizing invoice...");
+
+      const response = await api.put(`/inventory/invoice/finalize/${invoiceId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+
+      toast.dismiss();
+      if (response.data.success) {
+        toast.success("Invoice finalized successfully!");
+        fetchInvoices();
+      } else {
+        toast.error(response.data.message || "Failed to finalize invoice");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error finalizing invoice:", error);
+      toast.error(error.response?.data?.message || "Error finalizing invoice");
+    }
+  };
+
+  // Handle Delete Invoice
+  const handleDeleteInvoice = async (invoiceId) => {
+    if (!confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      toast.loading("Deleting invoice...");
+
+      const response = await api.delete(`/inventory/invoice/${invoiceId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.dismiss();
+      if (response.data.success) {
+        toast.success("Invoice deleted successfully!");
+        fetchInvoices();
+      } else {
+        toast.error(response.data.message || "Failed to delete invoice");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error deleting invoice:", error);
+      toast.error(error.response?.data?.message || "Error deleting invoice");
+    }
+  };
+
   const handleSaveInvoice = async () => {
     if (!selectedCustomer) {
       toast.error("Please select a customer");
@@ -286,10 +459,9 @@ const Invoice = () => {
     }
 
     try {
-      // Prepare the payload according to your API structure
       const payload = {
-        status: status || "Draft", // or "Final" based on your requirement
-        companyCode: "VE", // You might want to make this dynamic
+        status: status,
+        companyCode: "VE",
         invoiceDate: invoiceDate,
         customer: selectedCustomer,
         items: invoiceItems.map(item => ({
@@ -304,31 +476,35 @@ const Invoice = () => {
 
       console.log("Sending payload:", payload);
 
-      const response = await api.post("/inventory/invoice/draft", payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
+      let response;
+      if (isEditMode && editingInvoiceId) {
+        // Update existing invoice
+        response = await api.put(`/inventory/invoice/draft/${editingInvoiceId}`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        });
+      } else {
+        // Create new invoice
+        response = await api.post("/inventory/invoice/draft", payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        });
+      }
 
       if (response.data.success) {
-        toast.success("Invoice saved successfully!");
+        toast.success(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully!`);
         setIsAddOpen(false);
-
-        // Reset form
-        setInvoiceItems([]);
-        setSelectedCustomer("");
-        setCustomerVAT("");
-        setVatRegime("");
-
-        // Refresh invoices list
         fetchInvoices();
       } else {
-        toast.error(response.data.message || "Failed to save invoice");
+        toast.error(response.data.message || `Failed to ${isEditMode ? 'update' : 'save'} invoice`);
       }
     } catch (error) {
       console.error("Error saving invoice:", error);
-      toast.error(error.response?.data?.message || "Error saving invoice");
+      toast.error(error.response?.data?.message || `Error ${isEditMode ? 'updating' : 'saving'} invoice`);
     }
   };
 
@@ -598,6 +774,7 @@ const Invoice = () => {
               <DialogTrigger
                 onClick={() => {
                   setIsEditMode(false);
+                  setEditingInvoiceId(null);
                   setInvoiceNo("");
                 }}
                 asChild
@@ -607,42 +784,38 @@ const Invoice = () => {
                   Create Invoice
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+              <DialogContent className="max-w-3xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
                 <DialogHeader className="border-b border-border/50 pb-4">
                   <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
                     <FileSignature className="w-5 h-5 text-primary" />
-                    Add New Invoice
+                    {isEditMode ? 'Edit Invoice' : 'Add New Invoice'}
                   </DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-6 pt-4">
                   {/* Invoice No & Date */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* // Add status selection to your form */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Status</Label>
-                        <Select value={status} onValueChange={setStatus}>
-                          <SelectTrigger className="border-2">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Draft">Draft</SelectItem>
-                            <SelectItem value="Final">Final</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Invoice No</Label>
-                        <Input
-                          value={status === "Final" ? invoiceNo : "INV-DRAFT"}
-                          readOnly
-                          className="border-2 bg-gray-100 cursor-not-allowed"
-                        />
-                      </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <Select value={status} onValueChange={setStatus}>
+                        <SelectTrigger className="border-2">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Draft">Draft</SelectItem>
+                          <SelectItem value="Final">Final</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
+                    <div className="space-y-2">
+                      <Label>Invoice No</Label>
+                      <Input
+                        value={status === "Final" ? invoiceNo : "INV-DRAFT"}
+                        readOnly
+                        className="border-2 bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label>Invoice Date</Label>
                       <Input
@@ -653,6 +826,7 @@ const Invoice = () => {
                       />
                     </div>
                   </div>
+
 
                   {/* Customer + VAT Number */}
                   <div className="grid grid-cols-2 gap-4">
@@ -720,7 +894,6 @@ const Invoice = () => {
                           value={itemId}
                           onValueChange={(value) => {
                             setItemId(value);
-                            // Auto-fill description and unit price when item is selected
                             const selectedItem = itemsList.find(item => item._id === value);
                             if (selectedItem) {
                               setDescription(selectedItem.description || selectedItem.itemName);
@@ -777,11 +950,10 @@ const Invoice = () => {
                           value={vatRegime}
                           onValueChange={(value) => {
                             setVatRegime(value);
-
                             if (value === "Exemption") setVatRate(0);
-                            if (value === "Local VAT") setVatRate(20);
+                            if (value === "Local") setVatRate(20);
                             if (value === "Margin") setVatRate(0);
-                            if (value === "Non-local Individual") {
+                            if (value === "Non-local individual") {
                               const c = customerList.find(
                                 (x) => x._id === selectedCustomer
                               );
@@ -870,6 +1042,7 @@ const Invoice = () => {
                               <th className="p-2 text-left">Price</th>
                               <th className="p-2 text-left">VAT Rate</th>
                               <th className="p-2 text-left">Total</th>
+                              <th className="p-2 text-left">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -882,6 +1055,16 @@ const Invoice = () => {
                                   <td className="p-2">€{it.unitPrice}</td>
                                   <td className="p-2">{(it.vatRate * 100)}%</td>
                                   <td className="p-2 font-semibold">€{it.totalInclVAT?.toFixed(2)}</td>
+                                  <td className="p-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveItem(i)}
+                                      className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </td>
                                 </tr>
                               );
                             })}
@@ -891,6 +1074,7 @@ const Invoice = () => {
                               <td className="p-2">
                                 €{invoiceItems.reduce((sum, item) => sum + item.totalInclVAT, 0).toFixed(2)}
                               </td>
+                              <td></td>
                             </tr>
                           </tbody>
                         </table>
@@ -903,7 +1087,7 @@ const Invoice = () => {
                     className="w-full bg-gradient-to-r from-primary to-primary/90 py-3 text-base font-medium"
                     onClick={handleSaveInvoice}
                   >
-                    Save Invoice
+                    {isEditMode ? 'Update Invoice' : 'Save Invoice'}
                   </Button>
                 </div>
               </DialogContent>
@@ -1133,7 +1317,7 @@ const Invoice = () => {
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center justify-center gap-1">
                             {/* Show different actions based on tab */}
                             {activeTab === "draft" && (
                               <>
@@ -1154,16 +1338,29 @@ const Invoice = () => {
                                   size="sm"
                                   className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
                                   title="Edit"
+                                  onClick={() => handleEdit(item)}
                                 >
                                   <Edit className="w-4 h-4" />
+                                </Button>
+
+                                {/* ✅ Finalize */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                                  title="Finalize"
+                                  onClick={() => handleFinalizeInvoice(item._id)}
+                                >
+                                  <FileSignature className="w-4 h-4" />
                                 </Button>
 
                                 {/* 🗑 Delete */}
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                                  className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
                                   title="Delete"
+                                  onClick={() => handleDeleteInvoice(item._id)}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -1220,6 +1417,17 @@ const Invoice = () => {
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
+
+                                {/* 📥 Download */}
+                                <Button
+                                  onClick={() => handleDownload(item)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                                  title="Download"
+                                >
+                                  <DownloadIcon className="w-4 h-4" />
+                                </Button>
                               </>
                             )}
 
@@ -1236,25 +1444,45 @@ const Invoice = () => {
                                   <Eye className="w-4 h-4" />
                                 </Button>
 
-                                {/* ✏️ Edit */}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                                  title="Edit"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
+                                {/* Conditional actions based on status */}
+                                {item.status === 'draft' && (
+                                  <>
+                                    {/* ✏️ Edit */}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                                      title="Edit"
+                                      onClick={() => handleEdit(item)}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
 
-                                {/* 🗑 Delete */}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                    {/* ✅ Finalize */}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                                      title="Finalize"
+                                      onClick={() => handleFinalizeInvoice(item._id)}
+                                    >
+                                      <FileSignature className="w-4 h-4" />
+                                    </Button>
+                                  </>
+                                )}
+
+                                {/* 🗑 Delete (only for drafts) */}
+                                {item.status === 'draft' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                                    title="Delete"
+                                    onClick={() => handleDeleteInvoice(item._id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
 
                                 {/* 📥 Download */}
                                 <Button
