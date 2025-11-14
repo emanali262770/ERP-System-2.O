@@ -94,42 +94,42 @@ const StockPurchaseDetails = () => {
   const { token } = useAuth();
 
   const handleAddPurchaseItem = () => {
-  if (!itemId || !quantity || !unitCost || !barcode || !description) {
-    toast.error("Please fill all Items required fields");
-    return;
-  }
+    if (!itemId || !quantity || !unitCost || !barcode || !description) {
+      toast.error("Please fill all Items required fields");
+      return;
+    }
 
-  const selectedItemName = itemNames.find((x) => x._id === itemId)?.itemName;
+    const selectedItemName = itemNames.find((x) => x._id === itemId)?.itemName;
 
-  const newItem = {
-    itemId,
-    itemName: selectedItemName,
-    description,
-    quantity: Number(quantity),
-    unitCost: Number(unitCost),
-    barcode,
+    const newItem = {
+      itemId,
+      itemName: selectedItemName,
+      description,
+      quantity: Number(quantity),
+      unitCost: Number(unitCost),
+      barcode,
+    };
+
+    // 🔥 EDIT MODE
+    if (isItemEditMode && editItemIndex !== null) {
+      const updatedList = [...purchaseItems];
+      updatedList[editItemIndex] = newItem;
+      setPurchaseItems(updatedList);
+    } else {
+      // 🔥 ADD MODE
+      setPurchaseItems([...purchaseItems, newItem]);
+    }
+
+    // Reset form
+    setItemId("");
+    setDescription("");
+    setQuantity("");
+    setUnitCost("");
+    setBarcode("");
+
+    setEditItemIndex(null);
+    setIsItemEditMode(false);
   };
-
-  // 🔥 EDIT MODE
-  if (isItemEditMode && editItemIndex !== null) {
-    const updatedList = [...purchaseItems];
-    updatedList[editItemIndex] = newItem;
-    setPurchaseItems(updatedList);
-  } else {
-    // 🔥 ADD MODE
-    setPurchaseItems([...purchaseItems, newItem]);
-  }
-
-  // Reset form
-  setItemId("");
-  setDescription("");
-  setQuantity("");
-  setUnitCost("");
-  setBarcode("");
-
-  setEditItemIndex(null);
-  setIsItemEditMode(false);
-};
 
 
   // Fetch stock data
@@ -184,9 +184,9 @@ const StockPurchaseDetails = () => {
         setItemNames(res.data.data);
       } else {
         setTimeout(() => {
-           toast.error("Failed to fetch item names");
+          toast.error("Failed to fetch item names");
         }, 2000);
-       
+
       }
     } catch (error) {
       console.error("Error fetching item names:", error);
@@ -546,11 +546,11 @@ const StockPurchaseDetails = () => {
   };
 
   useEffect(() => {
-  const totalPages = Math.ceil(filteredStock.length / itemsPerPage);
-  if (currentPage > totalPages) {
-    setCurrentPage(1);
-  }
-}, [filteredStock]);
+    const totalPages = Math.ceil(filteredStock.length / itemsPerPage);
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filteredStock]);
 
   return (
     <DashboardLayout>
@@ -1209,11 +1209,10 @@ const StockPurchaseDetails = () => {
                         {visibleFields.includes("status") && (
                           <td className="px-6 py-4">
                             <Badge
-                              className={`px-2 py-1 ${
-                                purchase.status === "Received"
+                              className={`px-2 py-1 ${purchase.status === "Received"
                                   ? "bg-green-100 text-green-700"
                                   : "bg-red-300 text-gray-600"
-                              }`}
+                                }`}
                             >
                               {purchase?.status}
                             </Badge>
@@ -1236,6 +1235,7 @@ const StockPurchaseDetails = () => {
                         {visibleFields.includes("actions") && (
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-1">
+
                               {/* VIEW (Always) */}
                               <Button
                                 variant="ghost"
@@ -1245,9 +1245,8 @@ const StockPurchaseDetails = () => {
                                 <Eye size={16} />
                               </Button>
 
-                              {/* EDIT (Only ALL + PENDING) */}
-                              {(activeTab === "all" ||
-                                activeTab === "pending") && (
+                              {/* EDIT (Only when purchase is Pending) */}
+                              {purchase.status === "Pending" && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -1265,9 +1264,11 @@ const StockPurchaseDetails = () => {
                               >
                                 <Trash2 size={16} />
                               </Button>
+
                             </div>
                           </td>
                         )}
+
                       </tr>
                     ))
                   ) : (

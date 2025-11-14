@@ -530,22 +530,21 @@ const Invoice = () => {
 
     try {
       const payload = {
-        status: status,
+        status,
         companyCode: "VE",
-        invoiceDate: invoiceDate,
+        invoiceDate,
         customer: selectedCustomer,
         items: invoiceItems.map(item => ({
           itemId: item.itemId,
           description: item.description,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          vatRegime: vatRegime,
+          vatRegime,
           vatRate: item.vatRate
         }))
       };
 
-      // Remove invoiceNo from payload for drafts
-      // Only include it if status is "Final" AND you have a valid invoice number
+      // Only send invoiceNo if it's Final AND available
       if (status === "Final" && invoiceNo && invoiceNo !== "INV-DRAFT") {
         payload.invoiceNo = invoiceNo;
       }
@@ -553,36 +552,74 @@ const Invoice = () => {
       console.log("Sending payload:", payload);
 
       let response;
-      if (isEditMode && editingInvoiceId) {
-        // Update existing invoice
-        response = await api.put(`/inventory/invoice/draft/${editingInvoiceId}`, payload, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
-      } else {
-        // Create new invoice - don't send invoiceNo for drafts
-        response = await api.post("/inventory/invoice/draft", payload, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
+
+      // =============================
+      // 🚀 FINAL INVOICE LOGIC
+      // =============================
+      if (status === "Final") {
+        if (!editingInvoiceId) {
+          toast.error("Cannot finalize without invoice ID / draft first!");
+          return;
+        }
+
+        response = await api.post(
+          `/inventory/invoice/finalize/${editingInvoiceId}`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      // =============================
+      // 📝 DRAFT LOGIC
+      // =============================
+      else {
+        if (isEditMode && editingInvoiceId) {
+          // Update draft
+          response = await api.put(
+            `/inventory/invoice/draft/${editingInvoiceId}`,
+            payload,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        } else {
+          // Create new draft
+          response = await api.post(
+            `/inventory/invoice/draft`,
+            payload,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
       }
 
       if (response.data.success) {
-        toast.success(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully!`);
+        toast.success(
+          `Invoice ${status === "Final" ? "finalized" : isEditMode ? "updated" : "saved"} successfully!`
+        );
         setIsAddOpen(false);
         fetchInvoices();
       } else {
-        toast.error(response.data.message || `Failed to ${isEditMode ? 'update' : 'save'} invoice`);
+        toast.error(response.data.message || "Something went wrong");
       }
     } catch (error) {
-      console.error("Error saving invoice:", error);
-      toast.error(error.response?.data?.message || `Error ${isEditMode ? 'updating' : 'saving'} invoice`);
+      console.error("Invoice Error:", error);
+      toast.error(error.response?.data?.message || "Error saving invoice");
     }
   };
+
 
   const filteredInvoice = invoiceData
     .map((inv) => ({
@@ -1364,7 +1401,7 @@ const Invoice = () => {
                     <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
                       Total (Incl. VAT)
                     </th>
-                     <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-semibold uppercase tracking-wider">
@@ -1413,15 +1450,14 @@ const Invoice = () => {
                           €{item.totalInclVAT?.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 font-normal text-sm text-center">
-                           <div 
-                              className={`px-2 py-1 rounded-full ${
-                                item.status === "Final"
-                                  ? "bg-green-200 text-green-700"
-                                  : "bg-orange-300 text-white"
+                          <div
+                            className={`px-2 py-1 rounded-full ${item.status === "Final"
+                                ? "bg-green-200 text-green-700"
+                                : "bg-orange-300 text-white"
                               }`}
-                            >
-                              {item?.status}
-                            </div>
+                          >
+                            {item?.status}
+                          </div>
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">

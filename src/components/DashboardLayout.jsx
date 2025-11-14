@@ -183,10 +183,10 @@ const DashboardLayout = ({ children }) => {
   // Fetch notifications
   useEffect(() => {
     fetchNotifications();
-    
+
     // Set up polling for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
-    
+
     return () => clearInterval(interval);
   }, [token]);
 
@@ -225,8 +225,8 @@ const DashboardLayout = ({ children }) => {
 
       if (response.ok) {
         // Update local state
-        setNotifications(prev => 
-          prev.map(notif => 
+        setNotifications(prev =>
+          prev.map(notif =>
             notif._id === notificationId ? { ...notif, isRead: true } : notif
           )
         );
@@ -249,7 +249,7 @@ const DashboardLayout = ({ children }) => {
 
       if (response.ok) {
         // Update local state
-        setNotifications(prev => 
+        setNotifications(prev =>
           prev.map(notif => ({ ...notif, isRead: true }))
         );
         setUnreadCount(0);
@@ -270,7 +270,7 @@ const DashboardLayout = ({ children }) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 1) {
       return `${Math.floor(diffInHours * 60)}m ago`;
     } else if (diffInHours < 24) {
@@ -341,9 +341,9 @@ const DashboardLayout = ({ children }) => {
                 <DropdownMenuLabel className="flex items-center justify-between">
                   <span>Notifications</span>
                   {unreadCount > 0 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-auto p-0 text-xs text-blue-600 hover:text-blue-700"
                       onClick={markAllAsRead}
                     >
@@ -352,7 +352,7 @@ const DashboardLayout = ({ children }) => {
                   )}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                
+
                 {notifications.length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">
                     No notifications
@@ -363,9 +363,9 @@ const DashboardLayout = ({ children }) => {
                       <DropdownMenuItem
                         key={notification._id}
                         className={cn(
-                          "flex flex-col items-start p-3 cursor-pointer border-l-2",
-                          notification.isRead 
-                            ? "border-l-transparent bg-transparent" 
+                          "flex flex-col items-start p-3 cursor-pointer border-l-2 focus:bg-gray-200 hover:bg-gray-200", // Added hover:bg-gray-200 and focus:bg-gray-200
+                          notification.isRead
+                            ? "border-l-transparent bg-transparent"
                             : "border-l-blue-500 bg-blue-50"
                         )}
                         onClick={() => markAsRead(notification._id)}
@@ -399,10 +399,10 @@ const DashboardLayout = ({ children }) => {
                     ))}
                   </div>
                 )}
-                
+
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="justify-center text-blue-600 hover:text-blue-700 cursor-pointer"
+                <DropdownMenuItem
+                  className="justify-center text-blue-600 hover:text-blue-700 hover:bg-gray-200 focus:bg-gray-200 cursor-pointer" // Added hover styles here too
                   onClick={() => navigate("/notifications")}
                 >
                   View all notifications
