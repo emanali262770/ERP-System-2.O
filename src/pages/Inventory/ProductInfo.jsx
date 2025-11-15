@@ -202,6 +202,16 @@ const ProductInfo = () => {
   };
 
   const handleAddProduct = async () => {
+    const nameInput = document.querySelector('input[placeholder="Product title"]');
+    if (!nameInput.value.trim()) {
+      toast.error("Item Name is required!");
+      return;
+    }
+
+    if (!selectedCategory || selectedCategory.trim() === "") {
+      toast.error("Category is required!");
+      return;
+    }
     try {
       setLoading(true);
 
@@ -398,7 +408,7 @@ const ProductInfo = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">
-                        Item Code *
+                        Item Code
                       </Label>
                       <Input
                         value={itemCode}
@@ -408,7 +418,7 @@ const ProductInfo = () => {
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-foreground">
-                        Item Name *
+                        Item Name <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         placeholder="Product title"

@@ -145,8 +145,8 @@ const SupplierInformation = () => {
     try {
       setSaving(true);
 
-      if (!form.supplierName || !form.company || !form.address) {
-        toast.error("Please fill all required fields!");
+      if (!form.supplierName) {
+        toast.error("Name is required!");
         return;
       }
       if (form.email && !/\S+@\S+\.\S+/.test(form.email)) {
@@ -294,7 +294,7 @@ const SupplierInformation = () => {
                 <div className="space-y-6 pt-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Supplier Name <span className="text-red-500">*</span></Label>
+                      <Label>Supplier Name <span className="text-red-500">*</span> </Label>
                       <Input
                         placeholder="e.g. ABC Traders"
                         value={form.supplierName}
@@ -302,7 +302,7 @@ const SupplierInformation = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Company <span className="text-red-500">*</span></Label>
+                      <Label>Company</Label>
                       <Input
                         placeholder="e.g. ABC Distributors Ltd."
                         value={form.company}
@@ -312,15 +312,15 @@ const SupplierInformation = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Address <span className="text-red-500">*</span></Label>
-                    <Input
-                      placeholder="e.g. Plot 22, Industrial Area, Lahore"
-                      value={form.address}
-                      onChange={(e) => setForm({ ...form, address: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
+                    <div className="space-y-2">
+                      <Label>Address</Label>
+                      <Input
+                        placeholder="e.g. Plot 22, Industrial Area, Lahore"
+                        value={form.address}
+                        onChange={(e) => setForm({ ...form, address: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label>VAT Number</Label>
                       <Input
                         placeholder="e.g. PK-123456789"
@@ -328,9 +328,9 @@ const SupplierInformation = () => {
                         onChange={(e) => setForm({ ...form, vatNumber: e.target.value })}
                       />
                     </div>
-</div>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
-                    
+
                     <div className="space-y-2">
                       <Label>Email</Label>
                       <Input
@@ -340,17 +340,17 @@ const SupplierInformation = () => {
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                       />
                     </div>
-                      <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      placeholder="e.g. +92300-1234567"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Phone</Label>
+                      <Input
+                        placeholder="e.g. +92300-1234567"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      />
+                    </div>
                   </div>
 
-                
+
 
                   <Button
                     className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 py-3 text-base font-medium"
@@ -458,7 +458,7 @@ const SupplierInformation = () => {
                   {visibleFields.includes("orders") && (
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[120px]">Orders</th>
                   )}
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[100px]">Actions</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-foreground/80 uppercase tracking-wider whitespace-nowrap w-[100px]">Actions</th>
                 </tr>
               </thead>
 
@@ -499,7 +499,7 @@ const SupplierInformation = () => {
                       {visibleFields.includes("orders") && (
                         <td className="px-6 py-4 whitespace-nowrap">{s.numberOfOrders || 0}</td>
                       )}
-                      <td className="px-6 py-4 flex items-center gap-3">
+                      <td className="px-4 py-2 flex items-center">
                         <Button variant="ghost" size="sm" onClick={() => handleView(s._id)} title="View">
                           <Eye className="w-4 h-4" />
                         </Button>

@@ -127,7 +127,17 @@ const ManageCompanies = () => {
 
     // ----- Handlers -----
     const handleAddCompany = () => {
-        if (!newCompany.name) return toast.error("Company name is required!");
+        if (!newCompany.name) {
+            return toast.error("Company name is required!");
+        }
+
+        if (!newCompany.address) {
+            return toast.error("Address is required!");
+        }
+
+        if (!newCompany.country) {
+            return toast.error("Country is required!");
+        }
 
         const companyToAdd = {
             id: companies.length + 1,
@@ -265,7 +275,7 @@ const ManageCompanies = () => {
                                 {/* Address */}
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-sm font-medium">
-                                        Address
+                                        Address<span className="text-red-500">*</span>
                                     </Label>
                                     <Textarea
                                         placeholder="Enter company address"
@@ -279,7 +289,7 @@ const ManageCompanies = () => {
                                     {/* Country */}
                                     <div className="space-y-2">
                                         <Label className="flex items-center gap-2 text-sm font-medium">
-                                            <MapPin className="w-4 h-4" /> Country
+                                            <MapPin className="w-4 h-4" /> Country<span className="text-red-500">*</span>
                                         </Label>
                                         <Select
                                             value={newCompany.country}

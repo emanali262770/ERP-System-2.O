@@ -46,6 +46,8 @@ const CategoryPage = () => {
   const [saving, setSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  const [sizeInput, setSizeInput] = useState({ name: "", stock: "" });
   const filteredCategories = categoryList.filter(
     (c) =>
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -354,7 +356,7 @@ const CategoryPage = () => {
                   </div>
 
                   {/* Status */}
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label className="text-sm font-medium text-foreground flex items-center gap-2">
                       Status
                     </Label>
@@ -372,8 +374,88 @@ const CategoryPage = () => {
                         <SelectItem value="Inactive">Inactive</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div> */}
+
+                  {/* SIZE CHART SECTION */}
+                  <div className="mt-6 p-4 rounded-lg border bg-muted/30">
+                    {/* Size + Add button in one line */}
+                    <div className="flex gap-2 items-end">
+                      {/* Size */}
+                      <div className="flex-1">
+                        <Label>Size</Label>
+                        <Input
+                          value={sizeInput.name}
+                          onChange={(e) =>
+                            setSizeInput({ ...sizeInput, name: e.target.value })
+                          }
+                          placeholder="e.g., XL"
+                          className="border-2 w-[430px]"
+                        />
+                      </div>
+
+                      {/* Add Button */}
+                      <div>
+                        <Button
+                          onClick={() => {
+                            if (!sizeInput.name) return; // Only add if size is not empty
+                            setNewCategory({
+                              ...newCategory,
+                              sizes: [...(newCategory.sizes || []), { name: sizeInput.name }],
+                            });
+                            setSizeInput({ name: "" });
+                          }}
+                          className="bg-primary text-white mt-5 w-[150px]"
+                        >
+                          + Add Size
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Display Added Sizes */}
+                    {newCategory.sizes?.length > 0 && (
+                      <div className="mt-4 border rounded-lg p-3 bg-white">
+                        <h4 className="font-semibold mb-3">Added Sizes</h4>
+                        <table className="w-full border">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              <th className="p-2 text-left font-semibold">Sr #</th>
+                              <th className="p-2 text-left font-semibold">Size</th>
+                              <th className="p-2 text-right font-semibold">Action</th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {newCategory.sizes.map((size, i) => (
+                              <tr key={i} className="border-t">
+                                <td className="p-2 text-left">{i + 1}.</td> {/* Serial Number */}
+                                <td className="p-2 text-left">{size.name}</td>
+                                <td className="p-2 text-right pr-3">
+                                  {/* Cross to remove */}
+                                  <span
+                                    className="text-red-600 cursor-pointer hover:text-red-800 font-bold text-xl pr-3"
+                                    onClick={() => {
+                                      const updatedSizes = newCategory.sizes.filter(
+                                        (_, index) => index !== i
+                                      );
+                                      setNewCategory({ ...newCategory, sizes: updatedSizes });
+                                    }}
+                                  >
+                                    ×
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
 
+
+
+
+
+                  {/* Save / Update Button */}
                   <Button
                     className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 py-3 text-base font-medium flex items-center justify-center gap-2"
                     onClick={handleSaveCategory}
@@ -390,6 +472,7 @@ const CategoryPage = () => {
                   </Button>
                 </div>
               </DialogContent>
+
             </Dialog>
           </div>
         </div>

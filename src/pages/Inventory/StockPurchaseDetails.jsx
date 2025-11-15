@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Store,
   Loader,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -59,7 +60,7 @@ const StockPurchaseDetails = () => {
   const [unitCost, setUnitCost] = useState("");
   const [barcode, setBarcode] = useState("");
   const [purchaseItems, setPurchaseItems] = useState([]);
-
+  const [categoryInput, setCategoryInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [summary, setSummary] = useState({
     totalItems: 0,
@@ -94,7 +95,7 @@ const StockPurchaseDetails = () => {
   const { token } = useAuth();
 
   const handleAddPurchaseItem = () => {
-    if (!itemId || !quantity || !unitCost || !barcode || !description) {
+    if (!itemId || !quantity) {
       toast.error("Please fill all Items required fields");
       return;
     }
@@ -340,10 +341,10 @@ const StockPurchaseDetails = () => {
         return;
       }
 
-      if (!trackingNumber.trim()) {
-        toast.error("Tracking Number is required");
-        return;
-      }
+      // if (!trackingNumber.trim()) {
+      //   toast.error("Tracking Number is required");
+      //   return;
+      // }
 
       if (purchaseItems.length === 0) {
         toast.error("Please add at least one item");
@@ -714,17 +715,30 @@ const StockPurchaseDetails = () => {
                     </div>
                   </div>
 
-                  {/* Tracking Number */}
-                  <div className="space-y-2">
-                    <Label>
-                      Tracking Number <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={trackingNumber}
-                      onChange={(e) => setTrackingNumber(e.target.value)}
-                      placeholder="TRK-99221-PK"
-                      className="border-2"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+
+                    {/* Tracking Number */}
+                    <div className="space-y-2">
+                      <Label>
+                        Tracking Number
+                      </Label>
+                      <Input
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder="TRK-99221-PK"
+                        className="border-2"
+                      />
+                    </div>
+                    {/* Category Input */}
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Input
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
+                        placeholder="e.g., Electronics"
+                        className="border-2"
+                      />
+                    </div>
                   </div>
 
                   {/* ITEM SECTION */}
@@ -770,7 +784,7 @@ const StockPurchaseDetails = () => {
                       {/* Description */}
                       <div className="space-y-2">
                         <Label>
-                          Description <span className="text-red-500">*</span>
+                          SKU
                         </Label>
                         <Input
                           value={description}
@@ -799,13 +813,13 @@ const StockPurchaseDetails = () => {
                       {/* Unit Cost */}
                       <div className="space-y-2">
                         <Label>
-                          Unit Cost <span className="text-red-500">*</span>
+                          Unit Cost
                         </Label>
                         <Input
                           type="number"
                           value={unitCost}
                           onChange={(e) => setUnitCost(e.target.value)}
-                          placeholder="500"
+                          placeholder="0"
                           className="border-2"
                         />
                       </div>
@@ -813,7 +827,7 @@ const StockPurchaseDetails = () => {
                       {/* Barcode */}
                       <div className="space-y-2">
                         <Label>
-                          Barcode <span className="text-red-500">*</span>
+                          Barcode
                         </Label>
                         <Input
                           value={barcode}
@@ -940,17 +954,14 @@ const StockPurchaseDetails = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 gap-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 gap-y-6">
+          {/* Existing 4 cards */}
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-700">
-                    Total Items
-                  </p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {summary.totalItems || 0}
-                  </p>
+                  <p className="text-sm font-medium text-blue-700">Total Items</p>
+                  <p className="text-2xl font-bold text-blue-900">{summary.totalItems || 0}</p>
                 </div>
                 <div className="p-2 bg-blue-500/10 rounded-lg">
                   <Package className="w-5 h-5 text-blue-600" />
@@ -963,9 +974,7 @@ const StockPurchaseDetails = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-700">
-                    Total Stock Value
-                  </p>
+                  <p className="text-sm font-medium text-green-700">Total Stock Value</p>
                   <p className="text-2xl font-bold text-green-900">
                     € {(summary.totalStockValue ?? 0).toLocaleString()}
                   </p>
@@ -981,12 +990,8 @@ const StockPurchaseDetails = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-amber-700">
-                    Low Stock Items
-                  </p>
-                  <p className="text-2xl font-bold text-amber-900">
-                    {summary.lowStockItems || 0}
-                  </p>
+                  <p className="text-sm font-medium text-amber-700">Low Stock Items</p>
+                  <p className="text-2xl font-bold text-amber-900">{summary.lowStockItems || 0}</p>
                 </div>
                 <div className="p-2 bg-amber-500/10 rounded-lg">
                   <AlertTriangle className="w-5 h-5 text-amber-600" />
@@ -999,12 +1004,8 @@ const StockPurchaseDetails = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-purple-700">
-                    Stores in Consignment
-                  </p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {summary.storesInConsignment || 0}
-                  </p>
+                  <p className="text-sm font-medium text-purple-700">Stores in Consignment</p>
+                  <p className="text-2xl font-bold text-purple-900">{summary.storesInConsignment || 0}</p>
                 </div>
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <Store className="w-5 h-5 text-purple-600" />
@@ -1012,7 +1013,40 @@ const StockPurchaseDetails = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* New Card: Grand Total Pending */}
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-md transition-shadow duration-300">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-700">Grand Total Pending</p>
+                  <p className="text-2xl font-bold text-red-900">
+                    € {(summary.grandTotalPending ?? 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="p-2 bg-red-500/10 rounded-lg">
+                  <CreditCard className="w-5 h-5 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* New Card: Total Items Pending */}
+          <Card className="bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200 hover:shadow-md transition-shadow duration-300">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-teal-700">Total Items Pending</p>
+                  <p className="text-2xl font-bold text-teal-900">{summary.totalItemsPending || 0}</p>
+                </div>
+                <div className="p-2 bg-teal-500/10 rounded-lg">
+                  <Package className="w-5 h-5 text-teal-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
 
         {/* Search Section */}
         <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20 shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -1210,8 +1244,8 @@ const StockPurchaseDetails = () => {
                           <td className="px-6 py-4">
                             <Badge
                               className={`px-2 py-1 ${purchase.status === "Received"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-red-300 text-gray-600"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-300 text-gray-600"
                                 }`}
                             >
                               {purchase?.status}

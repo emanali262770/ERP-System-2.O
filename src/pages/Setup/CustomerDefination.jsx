@@ -150,7 +150,7 @@ const CustomerDefinition = () => {
     try {
       setLoading(true);
       const response = await api.get("/customers");
-    console.log("Res", response.data);
+      console.log("Res", response.data);
 
       if (response.data.success && Array.isArray(response.data.data)) {
         const formattedData = response.data.data.map((item) => ({
@@ -433,7 +433,7 @@ const CustomerDefinition = () => {
                     {/* Customer Name */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
-                        Customer Name
+                        Customer Name<span className="text-red-500">*</span>
                       </Label>
                       <Input
                         placeholder="Ali Traders"
@@ -490,7 +490,7 @@ const CustomerDefinition = () => {
                     {/* Billing Address */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
-                        Billing Address
+                        Billing Address<span className="text-red-500">*</span>
                       </Label>
                       <Input
                         placeholder="Street 12, Karachi"
@@ -508,7 +508,7 @@ const CustomerDefinition = () => {
                     {/* Country - NOW A DROPDOWN WITH 44 EUROPEAN COUNTRIES */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
-                        Country
+                        Country<span className="text-red-500">*</span>
                       </Label>
                       <Select
                         value={newCustomer.country}
@@ -532,7 +532,7 @@ const CustomerDefinition = () => {
                     {/* VAT Number */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
-                        VAT Number
+                        VAT Number<span className="text-red-500">*</span>
                       </Label>
                       <Input
                         placeholder="VAT12345"
@@ -550,7 +550,7 @@ const CustomerDefinition = () => {
                     {/* Customer Type */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
-                        Customer Type
+                        Customer Type<span className="text-red-500">*</span>
                       </Label>
                       <Select
                         value={newCustomer.customerType}
@@ -626,8 +626,8 @@ const CustomerDefinition = () => {
                         ? "Updating..."
                         : "Saving..."
                       : editingCustomer
-                      ? "Update Customer"
-                      : "Save Customer"}
+                        ? "Update Customer"
+                        : "Save Customer"}
                   </Button>
                 </div>
               </DialogContent>
