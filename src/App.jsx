@@ -32,6 +32,7 @@ import DrafTrack from "./pages/Inventory/DrafTrack";
 import CustomerLedgerReport from "./pages/Reports/CustomerLedgerReport";
 import SupplierLedgerReports from "./pages/Reports/SupplierLedgerReports";
 import PurchasePDFView from "./pages/Inventory/Models/PurchasePDFView";
+import StockPosition from "./pages/Inventory/StockPosition"
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,10 @@ const App = () => (
             <Route
             path="/inventory/draft-track"
             element={<DrafTrack />}
+          />
+            <Route
+            path="/inventory/stock-position"
+            element={<StockPosition />}
           />
 
           {/* Other Modules */}

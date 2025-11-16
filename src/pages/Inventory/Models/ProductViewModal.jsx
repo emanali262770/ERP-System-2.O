@@ -1,5 +1,10 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Eye, Loader } from "lucide-react";
 
 const ProductViewModal = ({ isOpen, onClose, product }) => {
@@ -36,19 +41,18 @@ const ProductViewModal = ({ isOpen, onClose, product }) => {
                 <p className="font-medium text-muted-foreground">Category:</p>
                 <p className="font-semibold">{product.category}</p>
 
-                <p className="font-medium text-muted-foreground">Unit:</p>
-                <p className="font-semibold">{product.unit}</p>
+                <p className="font-medium text-muted-foreground">Size:</p>
+                <p className="font-semibold">{product.size || "-"}</p>
+
+                <p className="font-medium text-muted-foreground">SKU:</p>
+                <p className="font-semibold break-all">{product.sku || "-"}</p>
 
                 <p className="font-medium text-muted-foreground">Barcode:</p>
-                <p className="font-semibold break-all">{product.barcode}</p>
-              </div>
-
-              <div className="mt-3">
-                <p className="font-medium text-muted-foreground mb-1">Description:</p>
-                <p className="bg-muted/80 rounded-md p-3 text-foreground text-sm sm:text-base break-words">
-                  {product.description || "No description available"}
+                <p className="font-semibold break-all">
+                  {product.barcode || "-"}
                 </p>
               </div>
+
             </div>
           </div>
         ) : (

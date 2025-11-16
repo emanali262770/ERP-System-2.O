@@ -70,6 +70,11 @@ const navigation = [
         href: "/inventory/draft-track",
         icon: NotepadTextDashed,
       },
+      {
+        name: "Stock Position",
+        href: "/inventory/stock-position",
+        icon: Package,
+      },
     ],
   },
   {

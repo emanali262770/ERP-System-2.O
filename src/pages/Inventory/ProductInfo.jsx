@@ -81,8 +81,9 @@ const ProductInfo = () => {
           id: item._id,
           itemCode: item.itemCode || "-",
           itemName: item.itemName || "-",
-          description: item.description || "-",
+          sku: item.sku || "-",
           category: item.category || "-",
+          size: item.size || "-",
           unit: item.unitOfMeasure || "-",
           barcode: item.barcode || "-", // ✅ fallback
           image: item.itemImage?.url || null,
@@ -155,7 +156,7 @@ const ProductInfo = () => {
       setSizes(cat.sizes); // expects array like ["XL", "L", "M"]
     }
   }, [selectedCategory, categories]);
-// console.log({categories});
+  // console.log({categories});
 
   const filteredProducts = products.filter(
     (item) =>
@@ -174,9 +175,10 @@ const ProductInfo = () => {
     "image",
     "itemCode",
     "itemName",
-    "description",
+    "sku",
     "category",
     "unit",
+    "size",
     "barcode",
   ]);
 
@@ -219,10 +221,8 @@ const ProductInfo = () => {
   };
 
   const handleAddProduct = async () => {
-    const nameInput = document.querySelector(
-      'input[placeholder="Product title"]'
-    );
-    if (!nameInput.value.trim()) {
+    // ✅ Validate required fields using state
+    if (!itemName.trim()) {
       toast.error("Item Name is required!");
       return;
     }
@@ -231,26 +231,25 @@ const ProductInfo = () => {
       toast.error("Category is required!");
       return;
     }
+
+    if (!selectedSize || selectedSize.trim() === "") {
+      toast.error("Size is required!");
+      return;
+    }
+
     try {
       setLoading(true);
 
       const formData = new FormData();
       if (selectedFile) formData.append("itemImage", selectedFile);
       formData.append("itemCode", itemCode);
-      formData.append(
-        "itemName",
-        document.querySelector('input[placeholder="Product title"]').value
-      );
+      formData.append("itemName", itemName);
       formData.append("category", selectedCategory);
-      formData.append(
-        "unitOfMeasure",
-        document.querySelector('input[placeholder="PCS, KG, Liter, etc."]')
-          .value
-      );
-      formData.append("description", document.querySelector("textarea").value);
+      formData.append("size", selectedSize);
+      formData.append("sku", sku);
+      formData.append("barcode", barcode);
 
       let res;
-
       if (isEditMode && editProductId) {
         // ✏️ EDIT MODE
         res = await api.put(`/inventory/items/${editProductId}`, formData, {
@@ -268,16 +267,24 @@ const ProductInfo = () => {
           },
         });
       }
+
       fetchProducts();
+
       if (res.data?.success) {
         toast.success(
           isEditMode
             ? "Product updated successfully!"
             : "Product added successfully!"
         );
+        // reset modal and states
         setIsAddOpen(false);
         setImagePreview(null);
         setSelectedFile(null);
+        setItemName("");
+        setSku("");
+        setBarcode("");
+        setSelectedCategory("");
+        setSelectedSize("");
         setIsEditMode(false);
         setEditProductId(null);
       } else {
@@ -296,7 +303,6 @@ const ProductInfo = () => {
   const handleEdit = (productId) => {
     // find product to edit
     const productToEdit = products.find((p) => p.id === productId);
-    // console.log(productToEdit);
     if (!productToEdit) {
       toast.error("Product not found");
       return;
@@ -307,25 +313,24 @@ const ProductInfo = () => {
     setEditProductId(productId);
     setIsAddOpen(true);
 
-    // pre-fill all fields
+    // ⭐ Set all form states
+    setItemName(productToEdit.itemName || "");
+    setSku(productToEdit.sku || "");
+    setBarcode(productToEdit.barcode || "");
     setSelectedCategory(productToEdit.category || "");
-    setImagePreview(productToEdit.image || null);
+    setSelectedSize(productToEdit.size || "");
     setItemCode(productToEdit.itemCode || "");
+    setImagePreview(productToEdit.image || null);
 
-    // update form inputs manually
-    setTimeout(() => {
-      const nameInput = document.querySelector(
-        'input[placeholder="Product title"]'
-      );
-      const descTextarea = document.querySelector("textarea");
-      const unitInput = document.querySelector(
-        'input[placeholder="PCS, KG, Liter, etc."]'
-      );
-
-      if (nameInput) nameInput.value = productToEdit.itemName || "";
-      if (descTextarea) descTextarea.value = productToEdit.description || "";
-      if (unitInput) unitInput.value = productToEdit.unit || "";
-    }, 50);
+    // if category has sizes, update the sizes array
+    const foundCat = categories.find(
+      (c) => c.categoryName === productToEdit.category
+    );
+    if (foundCat && foundCat.sizes) {
+      setSizes(foundCat.sizes);
+    } else {
+      setSizes([]); // fallback if no sizes
+    }
   };
 
   const handleDelete = async (productId) => {
@@ -382,6 +387,7 @@ const ProductInfo = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -404,9 +410,16 @@ const ProductInfo = () => {
                   // 🧠 Reset previous edit mode when adding new product
                   setIsEditMode(false);
                   setEditProductId(null);
+
+                  // ✅ Reset all form fields
+                  setItemName("");
+                  setSku("");
+                  setBarcode("");
+                  setSelectedCategory("");
+                  setSelectedSize("");
+                  setSizes([]);
                   setImagePreview(null);
                   setSelectedFile(null);
-                  setSelectedCategory("");
                 }}
               >
                 <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200">
@@ -504,7 +517,7 @@ const ProductInfo = () => {
                     {/* Size Dropdown */}
                     <div className="space-y-1">
                       <Label className="text-sm font-medium text-foreground">
-                      Size
+                        Size
                       </Label>
                       <Select
                         value={selectedSize}
@@ -538,7 +551,7 @@ const ProductInfo = () => {
                         SKU
                       </Label>
                       <Input
-                        placeholder="Stock Keeping Unit"
+                        placeholder="Enter SKU"
                         value={sku}
                         onChange={(e) => setSku(e.target.value)}
                         className="focus:ring-2 focus:ring-primary/20 border-2 transition-all duration-200"
@@ -699,9 +712,9 @@ const ProductInfo = () => {
                         Item Name
                       </th>
                     )}
-                    {visibleFields.includes("description") && (
+                    {visibleFields.includes("sku") && (
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                        Description
+                        sku
                       </th>
                     )}
                     {visibleFields.includes("category") && (
@@ -709,9 +722,14 @@ const ProductInfo = () => {
                         Category
                       </th>
                     )}
-                    {visibleFields.includes("unit") && (
+                    {/* {visibleFields.includes("unit") && (
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-                        Unit
+                        size
+                      </th>
+                    )} */}
+                    {visibleFields.includes("size") && (
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                        Size
                       </th>
                     )}
                     {visibleFields.includes("barcode") && (
@@ -780,10 +798,10 @@ const ProductInfo = () => {
                           </td>
                         )}
 
-                        {visibleFields.includes("description") && (
+                        {visibleFields.includes("sku") && (
                           <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <p className="text-sm text-muted-foreground line-clamp-2 max-w-xs">
-                              {item.description || "-"}
+                              {item.sku || "-"}
                             </p>
                           </td>
                         )}
@@ -801,12 +819,16 @@ const ProductInfo = () => {
                           </td>
                         )}
 
-                        {visibleFields.includes("unit") && (
+                        {/* {visibleFields.includes("unit") && (
                           <td className="px-6 py-4 whitespace-nowrap overflow-hidden text-ellipsis max-w-[130px]">
                             <div className="font-medium bg-muted/30 text-foreground px-3 py-1 rounded-full text-sm border border-border inline-block">
                               {item.unit || "-"}
                             </div>
                           </td>
+                        )} */}
+
+                        {visibleFields.includes("size") && (
+                          <td className="px-6 py-4">{item.size || "-"}</td>
                         )}
 
                         {visibleFields.includes("barcode") && (
@@ -911,7 +933,7 @@ const ProductInfo = () => {
               { key: "image", label: "Image" },
               { key: "itemCode", label: "Item Code" },
               { key: "itemName", label: "Item Name" },
-              { key: "description", label: "Description" },
+              { key: "sku", label: "Sku" },
               { key: "category", label: "Category" },
               { key: "unit", label: "Unit" },
               { key: "barcode", label: "Barcode" },
