@@ -276,7 +276,6 @@ const StockPurchaseDetails = () => {
       if (!category) return;
       setSizesLoading(true);
       console.log("Loggg ", category);
-      
 
       const res = await api.get(`/categories/sizes/${category}`);
 
@@ -422,10 +421,9 @@ const StockPurchaseDetails = () => {
         // user removed existing PDF → send empty string to remove it
         formData.append("supplierInvoice", "");
       }
-for (let pair of formData.entries()) {
-  console.log(pair[0] + " : " + pair[1]);
-}
-
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + " : " + pair[1]);
+      }
 
       let res;
 
@@ -561,27 +559,26 @@ for (let pair of formData.entries()) {
     (sum, item) => sum + item.quantity * item.unitCost,
     0
   );
- const handleEditItem = (index) => {
-  const item = purchaseItems[index];
-console.log({item});
+  const handleEditItem = (index) => {
+    const item = purchaseItems[index];
+    console.log({ item });
 
-  setItemId(item.itemId);
-  setDescription(item.description);
-  setQuantity(item.quantity);
-  setUnitCost(item.unitCost);
-  setSize(item.size);
+    setItemId(item.itemId);
+    setDescription(item.description);
+    setQuantity(item.quantity);
+    setUnitCost(item.unitCost);
+    setSize(item.size);
 
-  // ✅ Load VAT fields during edit
-  setVatRegime(item.vatRegime);
-  setVatRate(item.vatRate);
-  setTotalExclVAT(item.totalExclVAT);
-  setVatAmount(item.vatAmount);
-  setTotalInclVAT(item.totalInclVAT);
+    // ✅ Load VAT fields during edit
+    setVatRegime(item.vatRegime);
+    setVatRate(item.vatRate);
+    setTotalExclVAT(item.totalExclVAT);
+    setVatAmount(item.vatAmount);
+    setTotalInclVAT(item.totalInclVAT);
 
-  setEditItemIndex(index);
-  setIsItemEditMode(true);
-};
-
+    setEditItemIndex(index);
+    setIsItemEditMode(true);
+  };
 
   useEffect(() => {
     const totalPages = Math.ceil(filteredStock.length / itemsPerPage);
@@ -902,6 +899,7 @@ console.log({item});
                         <Input
                           type="number"
                           value={quantity}
+                          placeholder="0"
                           onChange={(e) => {
                             const value = Number(e.target.value);
 
@@ -909,20 +907,20 @@ console.log({item});
                               (x) => x.size === size
                             );
 
-                            if (availableSizes.length > 0 && !selectedSizeObj) {
-                              setQuantity(value);
-                              return;
-                            }
+                            // if (availableSizes.length > 0 && !selectedSizeObj) {
+                            //   setQuantity(value);
+                            //   return;
+                            // }
 
-                            if (
-                              availableSizes.length > 0 &&
-                              value > selectedSizeObj.stock
-                            ) {
-                              toast.error(
-                                `Only ${selectedSizeObj.stock} units available in stock`
-                              );
-                              return;
-                            }
+                            // if (
+                            //   availableSizes.length > 0 &&
+                            //   value > selectedSizeObj.stock
+                            // ) {
+                            //   toast.error(
+                            //     `Only ${selectedSizeObj.stock} units available in stock`
+                            //   );
+                            //   return;
+                            // }
 
                             setQuantity(value);
                             setQtyError("");
