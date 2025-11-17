@@ -545,20 +545,7 @@ for (let pair of formData.entries()) {
     setPurchaseItems(purchaseItems.filter((_, i) => i !== index));
   };
 
-  const totalQty = purchaseItems.reduce(
-    (sum, item) => sum + Number(item.quantity),
-    0
-  );
-
-  const totalUnitCost = purchaseItems.reduce(
-    (sum, item) => sum + Number(item.unitCost),
-    0
-  );
-
-  const totalAmount = purchaseItems.reduce(
-    (sum, item) => sum + item.quantity * item.unitCost,
-    0
-  );
+ 
  const handleEditItem = (index) => {
   const item = purchaseItems[index];
 console.log({item});
@@ -578,6 +565,7 @@ console.log({item});
 
   setEditItemIndex(index);
   setIsItemEditMode(true);
+   setAvailableSizes([]);
 };
 
 
@@ -624,6 +612,7 @@ console.log({item});
     setEditStockId(null);
     setIsItemEditMode(false);
     setEditItemIndex(null);
+    setAvailableSizes([]);
   };
 
   console.log({ stockData });
@@ -825,26 +814,8 @@ console.log({item});
                               setUnitCost(item.purchasePrice || 0);
 
                               // Fetch Sizes With Stock
-                              try {
-                                const res = await api.get(
-                                  `/categories/sizes-available/${item.category.replace(
-                                    /\s+/g,
-                                    ""
-                                  )}`
-                                );
+                             fetchSizesByCategory(item.category);
 
-                                const sizes = (res.data.data?.sizes || []).map(
-                                  (s) => ({
-                                    size: s.size,
-                                    stock: s.stock,
-                                  })
-                                );
-
-                                setAvailableSizes(sizes);
-                              } catch (error) {
-                                console.log("Failed to fetch sizes:", error);
-                                setAvailableSizes([]);
-                              }
                             } else {
                               setAvailableSizes([]);
                             }

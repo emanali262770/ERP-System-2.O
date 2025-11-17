@@ -38,9 +38,7 @@ const StockPosition = () => {
     fetchStockPosition();
   }, []);
 
-  // ====================================================
-  // SIZE SORTING (small → large)
-  // ====================================================
+  // SIZE SORTING
   const sizePriority = [
     "S", "M", "L", "XL",
     "2XL", "3XL", "4XL", "5XL", "6XL"
@@ -63,9 +61,7 @@ const StockPosition = () => {
       return sizePriority.indexOf(a) - sizePriority.indexOf(b);
     });
 
-  // ====================================================
-  // 1️⃣ Get ALL unique sizes across categories (XS removed)
-  // ====================================================
+  // 1️⃣ Get ALL unique sizes
   const allSizes = sortedSizes(
     Array.from(
       new Set(
@@ -73,31 +69,32 @@ const StockPosition = () => {
           cat.sizes.map((s) => normalizeSize(s.size))
         )
       )
-    ).filter((sz) => sz !== "XS")   // ❌ remove XS
+    ).filter((sz) => sz !== "XS")
   );
 
-  // ====================================================
-  // 2️⃣ Build consolidated rows
-  // ====================================================
+  // 2️⃣ Build consolidated rows (FIXED: totalSold added)
   const tableRows = stockPositionData.map((cat) => {
     const sizeMap = {};
     let totalQty = 0;
+    let totalSold = 0;  // ✅ Added
     let lastPurchase = null;
     let lastSale = null;
 
     cat.sizes.forEach((s) => {
       const name = normalizeSize(s.size);
-
-      if (name === "XS") return; // ❌ remove XS completely
+      if (name === "XS") return;
 
       const x = {
         stock: s.stock || 0,
+        totalSold: s.totalSold || 0,    // useful for future
         lastPurchaseDate: s.lastPurchaseDate,
         lastSaleDate: s.lastSaleDate,
       };
 
       sizeMap[name] = x;
+
       totalQty += x.stock;
+      totalSold += s.totalSold || 0;   // ✅ FIX: total sold calculated
 
       if (x.lastPurchaseDate && (!lastPurchase || new Date(x.lastPurchaseDate) > new Date(lastPurchase)))
         lastPurchase = x.lastPurchaseDate;
@@ -111,30 +108,21 @@ const StockPosition = () => {
       category: cat.categoryName,
       sizeMap,
       totalQty,
+      totalSold,     // ✅ added here
       lastPurchase,
       lastSale,
     };
   });
 
-  // ====================================================
-  // 3️⃣ Apply filters (Category + Size + Search)
-  // ====================================================
+  // 3️⃣ Filters
   const filteredRows = tableRows
     .filter((row) =>
       searchTerm ? row.category.toLowerCase().includes(searchTerm.toLowerCase()) : true
     )
     .filter((row) =>
       selectedCategory ? row.category === selectedCategory : true
-    )
-    // .filter((row) =>
-    //   selectedSizeFilter
-    //     ? Object.keys(row.sizeMap).includes(selectedSizeFilter)
-    //     : true
-    // );
+    );
 
-  // ====================================================
-  // 4️⃣ UI Rendering (styling untouched)
-  // ====================================================
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -148,7 +136,6 @@ const StockPosition = () => {
         {/* Filters Section */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div className="flex gap-4">
-            {/* Category Select */}
             <div className="w-[250px]">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Category
@@ -169,34 +156,8 @@ const StockPosition = () => {
                 ))}
               </select>
             </div>
-
-            {/* Size Select */}
-            {/* <div className="w-[250px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Size
-              </label>
-              <select
-                value={selectedSizeFilter}
-                disabled={!selectedCategory}
-                onChange={(e) => setSelectedSizeFilter(e.target.value)}
-                className="w-full p-2 border rounded-lg"
-              >
-                <option value="">All Sizes</option>
-                {selectedCategory &&
-                  stockPositionData
-                    .find((c) => c.categoryName === selectedCategory)
-                    ?.sizes
-                    .filter((s) => normalizeSize(s.size) !== "XS") // ❌ remove XS
-                    .map((s) => (
-                      <option key={s._id} value={normalizeSize(s.size)}>
-                        {normalizeSize(s.size)}
-                      </option>
-                    ))}
-              </select>
-            </div> */}
           </div>
 
-          {/* Search */}
           <div className="w-[300px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search Category
@@ -210,7 +171,7 @@ const StockPosition = () => {
           </div>
         </div>
 
-        {/* Consolidated Table */}
+        {/* Table */}
         <Card className="border rounded-2xl shadow-xl">
           <CardContent className="p-4 overflow-x-auto">
             <table className="min-w-full table-auto border-collapse">
@@ -224,6 +185,7 @@ const StockPosition = () => {
                   ))}
 
                   <th className="p-3 text-center">Total Qty</th>
+                  <th className="p-3 text-center">Total Sold</th>
                   <th className="p-3 text-center">Last Purchase</th>
                   <th className="p-3 text-center">Last Sale</th>
                 </tr>
@@ -233,7 +195,7 @@ const StockPosition = () => {
                 {filteredRows.map((row, i) => (
                   <tr key={row.id} className="border-b hover:bg-primary/5">
                     <td className="p-3">{i + 1}</td>
-                    <td className="p-3 font-semibold">{row.category}</td>
+                    <td className="p-3 font-semibold">{row.category || "-"}</td>
 
                     {allSizes.map((s) => (
                       <td key={s} className="p-3 text-center">
@@ -241,12 +203,24 @@ const StockPosition = () => {
                       </td>
                     ))}
 
-                    <td className="p-3 text-center font-bold">{row.totalQty}</td>
-                    <td className="p-3 text-center">
-                      {row.lastPurchase ? new Date(row.lastPurchase).toLocaleDateString() : "-"}
+                    <td className="p-3 text-center font-bold">
+                      {row.totalQty ?? "-"}
                     </td>
+
+                    <td className="p-3 text-center font-bold">
+                      {row.totalSold ?? "-"}   {/* ✅ FIXED */}
+                    </td>
+
                     <td className="p-3 text-center">
-                      {row.lastSale ? new Date(row.lastSale).toLocaleDateString() : "-"}
+                      {row.lastPurchase
+                        ? new Date(row.lastPurchase).toLocaleDateString()
+                        : "-"}
+                    </td>
+
+                    <td className="p-3 text-center">
+                      {row.lastSale
+                        ? new Date(row.lastSale).toLocaleDateString()
+                        : "-"}
                     </td>
                   </tr>
                 ))}
@@ -255,7 +229,6 @@ const StockPosition = () => {
             </table>
           </CardContent>
         </Card>
-
       </div>
     </DashboardLayout>
   );
