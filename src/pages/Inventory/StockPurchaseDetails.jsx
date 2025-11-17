@@ -827,7 +827,7 @@ console.log({item});
                               // Fetch Sizes With Stock
                               try {
                                 const res = await api.get(
-                                  `/categories/sizes-available/${item.category.replace(
+                                  `/categories/sizes/${item.category.replace(
                                     /\s+/g,
                                     ""
                                   )}`
