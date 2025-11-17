@@ -50,6 +50,13 @@ const StockPurchaseDetails = () => {
   const [sizesList, setSizesList] = useState([]);
   const [sizesLoading, setSizesLoading] = useState(false);
   const [selectedExistingPdf, setSelectedExistingPdf] = useState(null);
+  const [vatRegime, setVatRegime] = useState("");
+  const [vatRate, setVatRate] = useState(0);
+  const [totalExclVAT, setTotalExclVAT] = useState(0);
+  const [vatAmount, setVatAmount] = useState(0);
+  const [totalInclVAT, setTotalInclVAT] = useState(0);
+  const [availableSizes, setAvailableSizes] = useState([]);
+  const [qtyError, setQtyError] = useState("");
 
   const [purchaseDate, setPurchaseDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -112,6 +119,11 @@ const StockPurchaseDetails = () => {
       quantity: Number(quantity),
       unitCost: Number(unitCost),
       barcode,
+      vatRegime,
+      vatRate,
+      totalExclVAT,
+      vatAmount,
+      totalInclVAT,
     };
 
     // 🔥 EDIT MODE
@@ -130,11 +142,27 @@ const StockPurchaseDetails = () => {
     setDescription("");
     setQuantity("");
     setUnitCost("");
-    // setBarcode("");
+    setBarcode("");
+
+    setVatRegime("");
+    setVatRate(0);
+    setTotalExclVAT(0);
+    setVatAmount(0);
+    setTotalInclVAT(0);
 
     setEditItemIndex(null);
     setIsItemEditMode(false);
   };
+
+  useEffect(() => {
+    const excl = Number(quantity) * Number(unitCost);
+    const vat = (excl * Number(vatRate)) / 100;
+    const incl = excl + vat;
+
+    setTotalExclVAT(excl);
+    setVatAmount(vat);
+    setTotalInclVAT(incl);
+  }, [quantity, unitCost, vatRate]);
 
   // Fetch stock data
   const fetchStock = async () => {
@@ -367,6 +395,11 @@ const StockPurchaseDetails = () => {
         formData.append(`items[${index}][quantity]`, it.quantity);
         formData.append(`items[${index}][unitCost]`, it.unitCost);
         formData.append(`items[${index}][size]`, it.size || "");
+        formData.append(`items[${index}][vatRegime]`, it.vatRegime || "");
+        formData.append(`items[${index}][vatRate]`, it.vatRate || 0);
+        formData.append(`items[${index}][totalExclVAT]`, it.totalExclVAT || 0);
+        formData.append(`items[${index}][vatAmount]`, it.vatAmount || 0);
+        formData.append(`items[${index}][totalInclVAT]`, it.totalInclVAT || 0);
       });
 
       // Totals (same like Postman)
@@ -387,6 +420,10 @@ const StockPurchaseDetails = () => {
         // user removed existing PDF → send empty string to remove it
         formData.append("supplierInvoice", "");
       }
+for (let pair of formData.entries()) {
+  console.log(pair[0] + " : " + pair[1]);
+}
+
 
       let res;
 
@@ -447,7 +484,14 @@ const StockPurchaseDetails = () => {
       itemName: it.itemId.itemName,
       quantity: it.quantity,
       unitCost: it.unitCost,
-      size: it.size ?? "", // ✅ size added
+      size: it.size ?? "",
+
+      // ✅ Add missing VAT fields
+      vatRegime: it.vatRegime || "",
+      vatRate: it.vatRate || 0,
+      totalExclVAT: it.totalExclVAT || 0,
+      vatAmount: it.vatAmount || 0,
+      totalInclVAT: it.totalInclVAT || 0,
     }));
 
     setPurchaseItems(formattedItems);
@@ -515,18 +559,27 @@ const StockPurchaseDetails = () => {
     (sum, item) => sum + item.quantity * item.unitCost,
     0
   );
-  const handleEditItem = (index) => {
-    const item = purchaseItems[index];
+ const handleEditItem = (index) => {
+  const item = purchaseItems[index];
+console.log({item});
 
-    setItemId(item.itemId);
-    setDescription(item.description);
-    setQuantity(item.quantity);
-    setUnitCost(item.unitCost);
-    setSize(item.size);
+  setItemId(item.itemId);
+  setDescription(item.description);
+  setQuantity(item.quantity);
+  setUnitCost(item.unitCost);
+  setSize(item.size);
 
-    setEditItemIndex(index);
-    setIsItemEditMode(true);
-  };
+  // ✅ Load VAT fields during edit
+  setVatRegime(item.vatRegime);
+  setVatRate(item.vatRate);
+  setTotalExclVAT(item.totalExclVAT);
+  setVatAmount(item.vatAmount);
+  setTotalInclVAT(item.totalInclVAT);
+
+  setEditItemIndex(index);
+  setIsItemEditMode(true);
+};
+
 
   useEffect(() => {
     const totalPages = Math.ceil(filteredStock.length / itemsPerPage);
@@ -536,12 +589,14 @@ const StockPurchaseDetails = () => {
   }, [filteredStock]);
 
   const resetForm = () => {
+    // Top fields
     setPurchaseNo("");
     setPurchaseDate(new Date().toISOString().split("T")[0]);
     setSupplier("");
     setSelectedWarehouse("");
     setTrackingNumber("");
 
+    // Item fields
     setItemId("");
     setSize("");
     setDescription("");
@@ -549,15 +604,28 @@ const StockPurchaseDetails = () => {
     setUnitCost("");
     setBarcode("");
 
+    // VAT fields (IMPORTANT)
+    setVatRegime("");
+    setVatRate(0);
+    setTotalExclVAT(0);
+    setVatAmount(0);
+    setTotalInclVAT(0);
+
+    // Items list
     setPurchaseItems([]);
 
+    // PDF fields
     setPdfFile(null);
+    setPdfRemoved(false);
+    setSelectedExistingPdf(null);
 
+    // Modes
     setIsEditMode(false);
     setEditStockId(null);
     setIsItemEditMode(false);
     setEditItemIndex(null);
   };
+
   console.log({ stockData });
 
   return (
@@ -732,29 +800,64 @@ const StockPurchaseDetails = () => {
                   </div>
 
                   {/* ITEM SECTION */}
+
                   <div className="mt-6 p-4 rounded-lg border bg-muted/30">
                     <h3 className="font-semibold mb-3">Add Item</h3>
 
-                    {/* Item + Description (same line) */}
+                    {/* Item + Size */}
                     <div className="grid grid-cols-2 gap-4">
                       {/* Item Select */}
                       <div className="space-y-2">
                         <Label>
                           Item <span className="text-red-500">*</span>
                         </Label>
-                        <Select value={itemId} onValueChange={setItemId}>
+
+                        <Select
+                          value={itemId}
+                          onValueChange={async (value) => {
+                            setItemId(value);
+                            setSize(""); // reset size
+
+                            const item = itemNames.find((i) => i._id === value);
+
+                            if (item) {
+                              // Auto Fill Purchase Price
+                              setUnitCost(item.purchasePrice || 0);
+
+                              // Fetch Sizes With Stock
+                              try {
+                                const res = await api.get(
+                                  `/categories/sizes-available/${item.category.replace(
+                                    /\s+/g,
+                                    ""
+                                  )}`
+                                );
+
+                                const sizes = (res.data.data?.sizes || []).map(
+                                  (s) => ({
+                                    size: s.size,
+                                    stock: s.stock,
+                                  })
+                                );
+
+                                setAvailableSizes(sizes);
+                              } catch (error) {
+                                console.log("Failed to fetch sizes:", error);
+                                setAvailableSizes([]);
+                              }
+                            } else {
+                              setAvailableSizes([]);
+                            }
+                          }}
+                        >
                           <SelectTrigger className="border-2">
                             <SelectValue placeholder="Select Item" />
                           </SelectTrigger>
 
                           <SelectContent>
                             {itemNameLoading ? (
-                              <SelectItem
-                                value="loading"
-                                disabled
-                                className="flex justify-center items-center py-3"
-                              >
-                                <Loader className="w-5 h-5 text-primary animate-spin" />
+                              <SelectItem disabled>
+                                <Loader className="w-5 h-5 animate-spin" />
                               </SelectItem>
                             ) : itemNames.length > 0 ? (
                               itemNames.map((item) => (
@@ -763,51 +866,34 @@ const StockPurchaseDetails = () => {
                                 </SelectItem>
                               ))
                             ) : (
-                              <SelectItem value="no-data" disabled>
-                                No items found
-                              </SelectItem>
+                              <SelectItem disabled>No items found</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {/* Sizes */}
-                      <div className="space-y-2">
-                        <Label>Size</Label>
-                        <Select
-                          value={size}
-                          onValueChange={(value) => setSize(value)}
-                        >
-                          <SelectTrigger className="border-2">
-                            <SelectValue
-                              placeholder={
-                                sizesLoading ? "Loading..." : "Select Size"
-                              }
-                            />
-                          </SelectTrigger>
+                      {/* Size Select - AUTO HIDE IF NO SIZES */}
+                      {availableSizes.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Size</Label>
+                          <Select value={size} onValueChange={setSize}>
+                            <SelectTrigger className="border-2">
+                              <SelectValue placeholder="Select Size" />
+                            </SelectTrigger>
 
-                          <SelectContent>
-                            {sizesLoading ? (
-                              <SelectItem disabled value="loading">
-                                <Loader className="w-5 h-5 animate-spin" />{" "}
-                              </SelectItem>
-                            ) : sizesList.length > 0 ? (
-                              sizesList.map((sz) => (
-                                <SelectItem key={sz} value={sz}>
-                                  {sz}
+                            <SelectContent>
+                              {availableSizes.map((szObj) => (
+                                <SelectItem key={szObj.size} value={szObj.size}>
+                                  {szObj.size} (Stock: {szObj.stock})
                                 </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem disabled value="no-sizes">
-                                No sizes found
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Quantity - Unit Cost - Barcode */}
+                    {/* QTY - PRICE - VAT TYPE */}
                     <div className="grid grid-cols-3 gap-4 mt-4">
                       {/* Qty */}
                       <div className="space-y-2">
@@ -817,9 +903,37 @@ const StockPurchaseDetails = () => {
                         <Input
                           type="number"
                           value={quantity}
-                          onChange={(e) => setQuantity(e.target.value)}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+
+                            const selectedSizeObj = availableSizes.find(
+                              (x) => x.size === size
+                            );
+
+                            if (availableSizes.length > 0 && !selectedSizeObj) {
+                              setQuantity(value);
+                              return;
+                            }
+
+                            if (
+                              availableSizes.length > 0 &&
+                              value > selectedSizeObj.stock
+                            ) {
+                              toast.error(
+                                `Only ${selectedSizeObj.stock} units available in stock`
+                              );
+                              return;
+                            }
+
+                            setQuantity(value);
+                            setQtyError("");
+                          }}
                           className="border-2"
                         />
+
+                        {qtyError && (
+                          <p className="text-red-500 text-sm">{qtyError}</p>
+                        )}
                       </div>
 
                       {/* Unit Cost */}
@@ -829,32 +943,98 @@ const StockPurchaseDetails = () => {
                           type="number"
                           value={unitCost}
                           onChange={(e) => setUnitCost(e.target.value)}
-                          placeholder="0"
                           className="border-2"
                         />
                       </div>
 
-                      {/* Add Item Button */}
-                      <Button
-                        onClick={handleAddPurchaseItem}
-                        className="mt-8 w-full bg-primary text-white"
-                      >
-                        {isItemEditMode ? "Update Item" : "Add Item"}
-                      </Button>
-
-                      {/* Barcode */}
-                      {/* <div className="space-y-2">
-                        <Label>Barcode</Label>
-                        <Input
-                          value={barcode}
-                          onChange={(e) => setBarcode(e.target.value)}
-                          placeholder="BRC-POND-001"
-                          className="border-2"
-                        />
-                      </div> */}
+                      {/* VAT Regime */}
+                      <div className="space-y-2">
+                        <Label>VAT Regime</Label>
+                        <Select
+                          value={vatRegime}
+                          onValueChange={(value) => {
+                            setVatRegime(value);
+                            if (value === "Exemption") setVatRate(0);
+                            if (value === "Local") setVatRate(20);
+                            if (value === "Margin") setVatRate(0);
+                            if (value === "Non-local individual") {
+                              const c = customerList.find(
+                                (x) => x._id === selectedCustomer
+                              );
+                              setVatRate(c?.defaultVatRate || 0);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="border-2">
+                            <SelectValue placeholder="Select VAT Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Exemption">
+                              Exemption (0%)
+                            </SelectItem>
+                            <SelectItem value="Local">Local VAT</SelectItem>
+                            <SelectItem value="Margin">Margin</SelectItem>
+                            <SelectItem value="Non-local Individual">
+                              Non-local Individual (Customer VAT)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    {/* Display Added Items */}
+                    {/* VAT & TOTALS */}
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      {/* VAT Rate */}
+                      <div className="space-y-2">
+                        <Label>VAT Rate (%)</Label>
+                        <Input
+                          type="number"
+                          value={vatRate}
+                          onChange={(e) => setVatRate(e.target.value)}
+                          className="border-2"
+                        />
+                      </div>
+
+                      {/* Total Excl */}
+                      <div className="space-y-2">
+                        <Label>Total Excl. VAT</Label>
+                        <Input
+                          value={totalExclVAT}
+                          readOnly
+                          className="border-2 bg-gray-100"
+                        />
+                      </div>
+
+                      {/* VAT Amount */}
+                      <div className="space-y-2">
+                        <Label>VAT Amount</Label>
+                        <Input
+                          value={vatAmount}
+                          readOnly
+                          className="border-2 bg-gray-100"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Total Incl VAT */}
+                    <div className="space-y-2 mt-4">
+                      <Label>Total Incl. VAT</Label>
+                      <Input
+                        value={totalInclVAT}
+                        readOnly
+                        className="border-2 bg-gray-100"
+                      />
+                    </div>
+
+                    {/* Add Item Button */}
+                    <Button
+                      onClick={handleAddPurchaseItem}
+                      className="mt-4 w-full bg-primary text-white"
+                    >
+                      {isItemEditMode ? "Update Item" : "Add Item"}
+                    </Button>
+
+                    {/* Added Items Table */}
                     {purchaseItems.length > 0 && (
                       <div className="mt-4 border rounded-lg p-3 bg-white">
                         <h4 className="font-semibold mb-3">Added Items</h4>
@@ -862,9 +1042,15 @@ const StockPurchaseDetails = () => {
                           <thead className="bg-gray-100">
                             <tr>
                               <th className="p-2 text-left">Item</th>
-                              <th className="p-2 text-left">Size</th>
+
+                              {/* Hide Size column header if no size exists for any item */}
+                              {purchaseItems.some((it) => it.size) && (
+                                <th className="p-2 text-left">Size</th>
+                              )}
+
                               <th className="p-2 text-left">Qty</th>
                               <th className="p-2 text-left">Unit Cost</th>
+                              <th className="p-2 text-left">VAT</th>
                               <th className="p-2 text-left">Total</th>
                               <th className="p-2 text-end">Action</th>
                             </tr>
@@ -874,14 +1060,21 @@ const StockPurchaseDetails = () => {
                             {purchaseItems.map((it, i) => (
                               <tr key={i} className="border-t">
                                 <td className="p-2">{it.itemName}</td>
-                                <td className="p-2">{it.size}</td>
+
+                                {/* Hide Size column if size not available */}
+                                {purchaseItems.some((x) => x.size) && (
+                                  <td className="p-2">{it.size || "-"}</td>
+                                )}
+
                                 <td className="p-2">{it.quantity}</td>
                                 <td className="p-2">€{it.unitCost}</td>
+                                <td className="p-2">{it.vatAmount}</td>
+
                                 <td className="p-2 font-semibold">
-                                  €{it.quantity * it.unitCost}
+                                  €{it.totalInclVAT?.toFixed(2)}
                                 </td>
+
                                 <td className="p-2 flex gap-2 justify-end">
-                                  {/* Edit Button */}
                                   <button
                                     onClick={() => handleEditItem(i)}
                                     className="text-blue-600 hover:text-blue-800"
@@ -889,7 +1082,6 @@ const StockPurchaseDetails = () => {
                                     <Edit size={18} />
                                   </button>
 
-                                  {/* Remove Button */}
                                   <button
                                     onClick={() => handleRemoveItem(i)}
                                     className="text-red-600 hover:text-red-800"
@@ -902,41 +1094,6 @@ const StockPurchaseDetails = () => {
                           </tbody>
                         </table>
                       </div>
-                    )}
-                    {purchaseItems.length > 0 && (
-                      <>
-                        {/* Totals Summary Box */}
-                        <div className="mt-4 w-full flex justify-end">
-                          <div className="p-4  w-64">
-                            <h4 className="font-semibold mb-3 text-gray-700">
-                              Summary
-                            </h4>
-
-                            <div className="flex justify-between mb-2">
-                              <span className="text-gray-600">Total Qty:</span>
-                              <span className="font-semibold">{totalQty}</span>
-                            </div>
-
-                            <div className="flex justify-between mb-2">
-                              <span className="text-gray-600">
-                                Total Unit Cost:
-                              </span>
-                              <span className="font-semibold">
-                                €{totalUnitCost}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between border-t pt-2">
-                              <span className="text-gray-600">
-                                Grand Total:
-                              </span>
-                              <span className="font-bold text-primary">
-                                €{totalAmount}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </>
                     )}
                   </div>
 

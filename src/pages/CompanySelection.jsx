@@ -1,26 +1,42 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-
-const companies = [
-  { id: 1, name: "Afaq Distribution", role: "Admin" },
-  { id: 2, name: "Société Générale Imports", role: "Accountant" },
-  { id: 3, name: "Arfa Traders Paris", role: "Manager" },
-  { id: 4, name: "Bordeaux Logistics", role: "Supervisor" },
-  { id: 5, name: "Nice Merchandisers", role: "Sales Head" },
-  { id: 6, name: "Lyon Agro Distribution", role: "Finance Officer" },
-  { id: 7, name: "Toulouse Trading Co.", role: "Operations Manager" },
-];
-
-
+import { useEffect, useState } from "react";
+import api from "../Api/AxiosInstance";
 
 const CompanySelection = () => {
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch Companies
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get("/companies"); // same API as upper page
+        setCompanies(res.data.data || []);
+      } catch (error) {
+        console.error("Error fetching companies", error);
+        setCompanies([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanies();
+  }, []);
+
   const navigate = useNavigate();
 
   const selectCompany = (company) => {
-    toast.success(`Switched to ${company.name}`);
+    toast.success(`Switched to ${company.companyName}`);
     localStorage.setItem("selectedCompany", JSON.stringify(company));
     navigate("/dashboard");
   };
@@ -28,39 +44,48 @@ const CompanySelection = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-4">
       <div className="w-full max-w-3xl">
+        {/* Heading */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Select Company</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Select Company
+          </h1>
           <p className="text-muted-foreground">Choose a company to access</p>
         </div>
 
+        {/* Companies Grid */}
         <div className="grid md:grid-cols-2 gap-4">
           {companies.map((company) => (
             <Card
-              key={company.id}
+              key={company._id}
               className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 hover:border-primary"
               onClick={() => selectCompany(company)}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
+                  {/* Icon or Logo */}
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                     <Building2 className="w-6 h-6 text-primary" />
                   </div>
+
+                  {/* Status Badge */}
                   <Badge
-                    variant={
-                      company.role === "Admin" ? "success"
-                        : company.role === "Accountant" ? "destructive"
-                          : company.role === "Supervisor" ? "outline"
-                            : company.role === "Finance Officer" ? "default"
-                              : company.role === "Sales Head" ? "outline"
-                            : "accent"
+                    className={
+                      company.status === "Active"
+                        ? "bg-green-500/15 text-green-600"
+                        : "bg-red-500/15 text-red-600"
                     }
                   >
-                    {company.role}
+                    {company.status}
                   </Badge>
                 </div>
               </CardHeader>
+
               <CardContent>
-                <CardTitle className="text-xl mb-2">{company.name}</CardTitle>
+                {/* Company Name */}
+                <CardTitle className="text-xl mb-2">
+                  {company.companyName}
+                </CardTitle>
+
                 <CardDescription className="flex items-center justify-between">
                   <span>Access dashboard</span>
                   <ChevronRight className="w-4 h-4" />
