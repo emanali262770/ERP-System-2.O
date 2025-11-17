@@ -299,13 +299,13 @@ const Invoice = () => {
       setStatus(fullInvoice.status || "Draft");
       setInvoiceDate(
         fullInvoice.invoiceDate?.split("T")[0] ||
-          new Date().toISOString().split("T")[0]
+        new Date().toISOString().split("T")[0]
       );
 
       // Set invoice items
       if (fullInvoice.items && fullInvoice.items.length > 0) {
         const formattedItems = fullInvoice.items.map((item) => ({
-         itemId: item.itemId?._id || item.itemId,
+          itemId: item.itemId?._id || item.itemId,
           size: item.size,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -638,8 +638,7 @@ const Invoice = () => {
 
       if (response.data.success) {
         toast.success(
-          `Invoice ${
-            status === "Final" ? "finalized" : isEditMode ? "updated" : "saved"
+          `Invoice ${status === "Final" ? "finalized" : isEditMode ? "updated" : "saved"
           } successfully!`
         );
         setIsAddOpen(false);
@@ -858,9 +857,8 @@ const Invoice = () => {
         const payload = {
           to: invoice.customer?.email || "emanali262770@gmail.com",
           subject: `Your Invoice ${invoice.invoiceNo} from VESTIAIRE ST. HONORÉ`,
-          message: `Hello ${
-            invoice.customer?.customerName || invoice.customerName || "Customer"
-          }, please find your invoice attached.`,
+          message: `Hello ${invoice.customer?.customerName || invoice.customerName || "Customer"
+            }, please find your invoice attached.`,
         };
 
         const response = await api.post(
@@ -885,8 +883,7 @@ const Invoice = () => {
       const phone = invoice.phoneNumber || "03184486979";
 
       const msg = encodeURIComponent(
-        `Hello ${invoice.customerName || "Customer"}, your invoice ${
-          invoice.invoiceNo
+        `Hello ${invoice.customerName || "Customer"}, your invoice ${invoice.invoiceNo
         } is ready.`
       );
 
@@ -894,7 +891,7 @@ const Invoice = () => {
       toast.success("Redirecting to WhatsApp...");
     }
   };
-  console.log({ finalInvoices,draftInvoices });
+  console.log({ finalInvoices, draftInvoices });
 
   return (
     <DashboardLayout>
@@ -1102,28 +1099,26 @@ const Invoice = () => {
                         )}
                       </div>
 
-                      {/* Size Selection */}
-                      <div className="space-y-2">
-                        <Label>Size</Label>
+                      {/* Size Selection — show only if sizes exist */}
+                      {availableSizes.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Size</Label>
 
-                        <Select value={size} onValueChange={setSize}>
-                          <SelectTrigger className="border-2">
-                            <SelectValue placeholder="Select size" />
-                          </SelectTrigger>
+                          <Select value={size} onValueChange={setSize}>
+                            <SelectTrigger className="border-2">
+                              <SelectValue placeholder="Select size" />
+                            </SelectTrigger>
 
-                          <SelectContent>
-                            {availableSizes.length > 0 ? (
-                              availableSizes.map((szObj) => (
+                            <SelectContent>
+                              {availableSizes.map((szObj) => (
                                 <SelectItem key={szObj.size} value={szObj.size}>
                                   {szObj.size} (Stock: {szObj.stock})
                                 </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem disabled>No sizes</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                     {/* Qty - Price - VAT Type */}
                     <div className="grid grid-cols-3 gap-4 mt-4">
@@ -1594,11 +1589,10 @@ const Invoice = () => {
                         </td>
                         <td className="px-6 py-4 font-normal text-sm text-center">
                           <div
-                            className={`px-2 py-1 rounded-full ${
-                              item.status === "Final"
+                            className={`px-2 py-1 rounded-full ${item.status === "Final"
                                 ? "bg-green-200 text-green-700"
                                 : "bg-orange-300 text-white"
-                            }`}
+                              }`}
                           >
                             {item?.status}
                           </div>

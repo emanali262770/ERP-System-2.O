@@ -8,6 +8,9 @@ import { Package } from "lucide-react";
 const StockPosition = () => {
   const [loading, setLoading] = useState(false);
   const [stockPositionData, setStockPositionData] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSizeFilter, setSelectedSizeFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const sizeColors = {
     SM: "from-green-50 to-green-100 border-green-200 text-green-900",
@@ -45,6 +48,16 @@ const StockPosition = () => {
       .join("");
   };
 
+  // 1) Filter by search text
+  const filteredCategories = stockPositionData.filter((cat) =>
+    cat.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // 2) Filter by category selection
+  const visibleCategories = selectedCategory
+    ? filteredCategories.filter((cat) => cat.categoryName === selectedCategory)
+    : filteredCategories;
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -64,40 +77,158 @@ const StockPosition = () => {
             No stock data available
           </p>
         ) : (
-          <div className="space-y-12">
-            {stockPositionData.map((category, index) => (
-              <div key={category._id}>
-                {/* Category Name */}
-                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                  {index + 1}. {category.categoryName}
-                </h2>
+          <>
+            {/* Filters Section */}
+            < div className="flex flex-wrap items-center justify-between gap-4 mb-8">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
-                  {category.sizes.map((sizeObj) => {
-                    const size = getSizeName(sizeObj).toUpperCase();
-                    const count = sizeObj.stock || 0;
+              <div className="flex gap-4">
+                {/* Category Select */}
+                <div className="w-[250px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Category
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setSelectedSizeFilter("");
+                    }}
+                    className="w-full p-2 border rounded-lg"
+                  >
+                    <option value="">All Categories</option>
+                    {stockPositionData.map((cat) => (
+                      <option key={cat._id} value={cat.categoryName}>
+                        {cat.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                    return (
-                      <Card
-                        key={sizeObj._id}
-                        className={`bg-gradient-to-br ${
-                          sizeColors[size] || "from-gray-50 to-gray-100 border-gray-200 text-gray-900"
-                        } border hover:shadow-md transition-shadow duration-300`}
-                      >
-                        <CardContent className="p-4 text-center">
-                          <p className="text-sm font-medium">{size}</p>
-                          <p className="text-2xl font-bold">{count}</p>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                {/* Size Filter */}
+                <div className="w-[250px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Size
+                  </label>
+                  <select
+                    value={selectedSizeFilter}
+                    onChange={(e) => setSelectedSizeFilter(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                    disabled={!selectedCategory}
+                  >
+                    <option value="">All Sizes</option>
+
+                    {selectedCategory &&
+                      stockPositionData
+                        .find((cat) => cat.categoryName === selectedCategory)
+                        ?.sizes.map((s) => (
+                          <option key={s._id} value={getSizeName(s).toUpperCase()}>
+                            {getSizeName(s).toUpperCase()}
+                          </option>
+                        ))}
+                  </select>
                 </div>
               </div>
-            ))}
-          </div>
+              {/* Search Bar */}
+              <div className="w-[300px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Search Category
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search category..."
+                  className="w-full p-2 border rounded-lg"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+
+            <div className="space-y-10">
+              {visibleCategories.map((category, index) => (
+                <div
+                  key={category._id}
+                  className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-200"
+                >
+                  {/* Gradient Header */}
+                  <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-primary/20 to-primary/5 rounded-t-2xl">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-primary to-primary/50 text-white font-semibold text-sm shadow-sm">
+                        {index + 1}
+                      </span>
+                      <h2 className="text-xl font-semibold text-gray-900 truncate">
+                        {category.categoryName}
+                      </h2>
+                    </div>
+                    <span className="text-xs text-gray-500 italic">
+                      {category.sizes.length} sizes
+                    </span>
+                  </div>
+
+                  {/* Sizes Table */}
+                  <div className="p-6 overflow-x-auto">
+                    {category.sizes.length > 0 ? (
+                      <table className="min-w-full table-auto border-collapse">
+                        <thead className="bg-gray-50 text-gray-700 uppercase text-sm tracking-wide">
+                          <tr>
+                            <th className="p-3 text-left font-semibold">sr</th>
+                            <th className="p-3 text-left font-semibold">Size</th>
+                            <th className="p-3 text-left font-semibold">Stock</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {category.sizes
+                            .filter((sz) =>
+                              selectedSizeFilter
+                                ? getSizeName(sz).toUpperCase() === selectedSizeFilter
+                                : true
+                            )
+                            .map((sizeObj, idx) => {
+                              const size = getSizeName(sizeObj).toUpperCase();
+                              const count = sizeObj.stock || 0;
+
+                              // Stock color coding
+                              let stockBg = "bg-green-100 text-green-800";
+                              if (count === 0) stockBg = "bg-red-100 text-red-800";
+                              else if (count <= 5) stockBg = "bg-yellow-100 text-yellow-800";
+
+                              return (
+                                <tr
+                                  key={sizeObj._id}
+                                  className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-primary/5 transition`}
+                                >
+                                  <td className="p-3 font-medium text-gray-800">{idx + 1}.</td>
+                                  <td className="p-3 font-medium text-gray-800">{size}</td>
+                                  <td className="p-3">
+                                    <span
+                                      className={`px-3 py-1 rounded-full font-semibold ${stockBg}`}
+                                    >
+                                      {count}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="text-center p-6 text-gray-500 italic bg-gray-50 rounded-xl">
+                        No sizes available
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+
+
+          </>
+
         )}
       </div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };
 
