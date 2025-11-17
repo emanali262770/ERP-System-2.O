@@ -53,7 +53,7 @@ const StockViewModal = ({ isOpen, onClose, stock }) => {
                     Invoice PDF:
                   </p>
                   <p className="font-semibold flex items-center gap-3">
-                    <span>{stock.supplierInvoice.originalName}</span>
+                    {/* <span>{stock.supplierInvoice.originalName}</span> */}
 
                     <button
                       onClick={() =>
@@ -98,12 +98,12 @@ const StockViewModal = ({ isOpen, onClose, stock }) => {
                           <td className="p-2">{index + 1}</td>
 
                           <td className="p-2 font-semibold">
-                            {itm.itemId?.itemName}
+                            {itm.itemId?.itemName|| "-"}
                           </td>
 
-                          <td className="p-2">{itm.size}</td>
+                          <td className="p-2">{itm.size || "-"}</td>
 
-                          <td className="p-2 font-medium">{itm.quantity}</td>
+                          <td className="p-2 font-medium">{itm.quantity|| "-"}</td>
 
                           <td className="p-2 text-green-700 font-semibold">
                             € {itm.unitCost?.toLocaleString()}
