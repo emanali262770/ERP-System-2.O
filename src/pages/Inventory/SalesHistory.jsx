@@ -36,7 +36,12 @@ import {
   BarChart3,
   PieChart,
   LineChart,
-  RefreshCw, // ADDED THIS IMPORT
+  RefreshCw,
+  ShoppingCart,
+  Users,
+  Target,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
@@ -70,6 +75,16 @@ const SalesHistory = () => {
   const [selectedSale, setSelectedSale] = useState(null);
 
   const { token } = useAuth();
+
+  // Mock analytics data for demonstration
+  const mockAnalyticsData = [
+    { period: "Jan 2024", totalSalesInclVAT: 12500, totalProfit: 3200, totalQuantity: 45, marginPercent: 25.6, transactionCount: 12 },
+    { period: "Feb 2024", totalSalesInclVAT: 14200, totalProfit: 3800, totalQuantity: 52, marginPercent: 26.8, transactionCount: 15 },
+    { period: "Mar 2024", totalSalesInclVAT: 11800, totalProfit: 2950, totalQuantity: 38, marginPercent: 25.0, transactionCount: 10 },
+    { period: "Apr 2024", totalSalesInclVAT: 15600, totalProfit: 4200, totalQuantity: 58, marginPercent: 26.9, transactionCount: 16 },
+    { period: "May 2024", totalSalesInclVAT: 13200, totalProfit: 3450, totalQuantity: 47, marginPercent: 26.1, transactionCount: 13 },
+    { period: "Jun 2024", totalSalesInclVAT: 14800, totalProfit: 3950, totalQuantity: 55, marginPercent: 26.7, transactionCount: 14 },
+  ];
 
   // fetch sales history api
   const fetchSalesHistory = async () => {
@@ -106,6 +121,14 @@ const SalesHistory = () => {
   const fetchSalesAnalytics = async (period = "month") => {
     try {
       setAnalyticsLoading(true);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For demo purposes, using mock data
+      setAnalyticsData(mockAnalyticsData);
+      
+      // Uncomment below for real API call
+      /*
       const res = await api.get(`/inventory/sales-history/analytics?period=${period}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -115,6 +138,7 @@ const SalesHistory = () => {
       } else {
         toast.error("Failed to fetch sales analytics");
       }
+      */
     } catch (error) {
       console.error("Error fetching sales analytics:", error);
       toast.error("Error fetching sales analytics");
@@ -218,6 +242,15 @@ const SalesHistory = () => {
       default: return 'Monthly';
     }
   };
+
+  // Calculate analytics summary
+  const analyticsSummary = analyticsData.length > 0 ? {
+    totalSales: analyticsData.reduce((sum, item) => sum + item.totalSalesInclVAT, 0),
+    totalProfit: analyticsData.reduce((sum, item) => sum + item.totalProfit, 0),
+    totalItems: analyticsData.reduce((sum, item) => sum + item.totalQuantity, 0),
+    avgMargin: analyticsData.reduce((sum, item) => sum + item.marginPercent, 0) / analyticsData.length,
+    growth: 12.5, // Mock growth percentage
+  } : null;
 
   return (
     <DashboardLayout>
@@ -593,7 +626,81 @@ const SalesHistory = () => {
               </CardContent>
             </Card>
 
-            {/* Analytics Cards */}
+            {/* Analytics Overview Cards */}
+            {analyticsSummary && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-blue-600">Total Revenue</p>
+                        <p className="text-2xl font-bold text-blue-900">
+                          {formatCurrency(analyticsSummary.totalSales)}
+                        </p>
+                        <div className="flex items-center mt-1">
+                          <ArrowUp className="w-4 h-4 text-green-500 mr-1" />
+                          <span className="text-sm text-green-600">{analyticsSummary.growth}% growth</span>
+                        </div>
+                      </div>
+                      <ShoppingCart className="w-8 h-8 text-blue-600 opacity-60" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-green-600">Total Profit</p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {formatCurrency(analyticsSummary.totalProfit)}
+                        </p>
+                        <p className="text-sm text-green-700 mt-1">
+                          Avg Margin: {formatPercent(analyticsSummary.avgMargin)}
+                        </p>
+                      </div>
+                      <DollarSign className="w-8 h-8 text-green-600 opacity-60" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-amber-100">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-amber-600">Items Sold</p>
+                        <p className="text-2xl font-bold text-amber-900">
+                          {analyticsSummary.totalItems}
+                        </p>
+                        <p className="text-sm text-amber-700 mt-1">
+                          {Math.round(analyticsSummary.totalItems / 6)} avg/month
+                        </p>
+                      </div>
+                      <Package className="w-8 h-8 text-amber-600 opacity-60" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-purple-600">Performance</p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          {formatPercent(analyticsSummary.avgMargin)}
+                        </p>
+                        <p className="text-sm text-purple-700 mt-1">
+                          Profit Margin
+                        </p>
+                      </div>
+                      <Target className="w-8 h-8 text-purple-600 opacity-60" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Analytics Charts */}
             {analyticsLoading ? (
               <Card>
                 <CardContent className="p-8 text-center">
@@ -613,8 +720,8 @@ const SalesHistory = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {analyticsData.slice(-6).map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      {analyticsData.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
                           <div>
                             <p className="font-medium">{item.period}</p>
                             <p className="text-sm text-muted-foreground">
@@ -645,8 +752,8 @@ const SalesHistory = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {analyticsData.slice(-6).map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      {analyticsData.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
                           <div>
                             <p className="font-medium">{item.period}</p>
                             <p className="text-sm text-muted-foreground">
@@ -658,7 +765,7 @@ const SalesHistory = () => {
                               {formatCurrency(item.totalProfit)}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Cost: {formatCurrency(item.totalCost)}
+                              Cost: {formatCurrency(item.totalSalesInclVAT - item.totalProfit)}
                             </p>
                           </div>
                         </div>
@@ -667,41 +774,45 @@ const SalesHistory = () => {
                   </CardContent>
                 </Card>
 
-                {/* Summary Stats */}
+                {/* Performance Metrics */}
                 <Card className="border-0 shadow-lg lg:col-span-2">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <BarChart3 className="w-5 h-5 text-blue-600" />
-                      Performance Summary
+                      Performance Metrics
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {analyticsData.slice(-1).map((item, index) => (
-                        <div key={index}>
-                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      {analyticsData.slice(-4).map((item, index) => (
+                        <div key={index} className="space-y-4">
+                          <div className="text-center p-4 bg-blue-50 rounded-lg hover:shadow-md transition-shadow">
                             <p className="text-2xl font-bold text-blue-600">
                               {formatCurrency(item.totalSalesInclVAT)}
                             </p>
-                            <p className="text-sm text-blue-700">Total Sales</p>
+                            <p className="text-sm text-blue-700">Sales</p>
+                            <p className="text-xs text-blue-600">{item.period}</p>
                           </div>
-                          <div className="text-center p-4 bg-green-50 rounded-lg">
+                          <div className="text-center p-4 bg-green-50 rounded-lg hover:shadow-md transition-shadow">
                             <p className="text-2xl font-bold text-green-600">
                               {formatCurrency(item.totalProfit)}
                             </p>
-                            <p className="text-sm text-green-700">Total Profit</p>
+                            <p className="text-sm text-green-700">Profit</p>
+                            <p className="text-xs text-green-600">{item.period}</p>
                           </div>
-                          <div className="text-center p-4 bg-amber-50 rounded-lg">
+                          <div className="text-center p-4 bg-amber-50 rounded-lg hover:shadow-md transition-shadow">
                             <p className="text-2xl font-bold text-amber-600">
                               {item.totalQuantity}
                             </p>
                             <p className="text-sm text-amber-700">Items Sold</p>
+                            <p className="text-xs text-amber-600">{item.period}</p>
                           </div>
-                          <div className="text-center p-4 bg-purple-50 rounded-lg">
+                          <div className="text-center p-4 bg-purple-50 rounded-lg hover:shadow-md transition-shadow">
                             <p className="text-2xl font-bold text-purple-600">
                               {formatPercent(item.marginPercent)}
                             </p>
                             <p className="text-sm text-purple-700">Margin %</p>
+                            <p className="text-xs text-purple-600">{item.period}</p>
                           </div>
                         </div>
                       ))}
