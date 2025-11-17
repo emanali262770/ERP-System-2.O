@@ -346,10 +346,7 @@ const Invoice = () => {
     if (selectedItem) {
       try {
         const res = await api.get(
-          `/categories/sizes-available/${selectedItem.category.replace(
-            /\s+/g,
-            ""
-          )}`
+          `/categories/sizes-available/${selectedItem.category}`
         );
         setAvailableSizes(res.data.data?.sizes || []);
       } catch (err) {
