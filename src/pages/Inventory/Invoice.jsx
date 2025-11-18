@@ -95,7 +95,7 @@ const Invoice = () => {
   // ---------------- FORM STATES ----------------
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [customerVAT, setCustomerVAT] = useState("");
-  const [vatRegime, setVatRegime] = useState("");
+  const [vatRegime, setVatRegime] = useState("Exemption");
 
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("");
