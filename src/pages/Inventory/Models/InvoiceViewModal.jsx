@@ -124,7 +124,7 @@ const InvoiceViewModal = ({ isOpen, onClose, invoice }) => {
 
                         {/* Item Name or ID */}
                         <td className="px-4 py-2 font-medium">
-                          {it.itemId?.itemName || it.itemId?._id || "—"}
+                          {`${it.itemId?.itemName.slice(0,20) || it.itemId?._id}...`|| "—"}
                         </td>
 
                         {/* Size */}

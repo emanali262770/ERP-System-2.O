@@ -93,12 +93,12 @@ const StockViewModal = ({ isOpen, onClose, stock }) => {
                       {stock.items.map((itm, index) => (
                         <tr
                           key={index}
-                          className="border-t border-border/20 hover:bg-muted/40 transition"
+                          className="border-t whitespace-nowrap border-border/20 hover:bg-muted/40 transition"
                         >
                           <td className="p-2">{index + 1}</td>
 
-                          <td className="p-2 font-semibold">
-                            {itm.itemId?.itemName|| "-"}
+                          <td className="p-2  font-semibold">
+                            {`${itm.itemId?.itemName.slice(0,20)}...`|| "-"}
                           </td>
 
                           <td className="p-2">{itm.size || "-"}</td>
