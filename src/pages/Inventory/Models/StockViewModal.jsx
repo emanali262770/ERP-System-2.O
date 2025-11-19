@@ -10,7 +10,7 @@ import { Eye, Loader } from "lucide-react";
 const StockViewModal = ({ isOpen, onClose, stock }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg sm:max-w-xl w-[95vw] bg-background/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl overflow-y-auto max-h-[90vh]">
+      <DialogContent className="max-w-lg sm:max-w-2xl w-[95vw] bg-background/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl overflow-y-auto max-h-[90vh]">
         <DialogHeader className="border-b border-border/40 pb-3">
           <DialogTitle className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
             <Eye className="w-5 h-5 text-primary" />
@@ -98,7 +98,7 @@ const StockViewModal = ({ isOpen, onClose, stock }) => {
                           <td className="p-2">{index + 1}</td>
 
                           <td className="p-2  font-semibold">
-                            {`${itm.itemId?.itemName.slice(0,20)}...`|| "-"}
+                            {`${itm.itemId?.itemName}`|| "-"}
                           </td>
 
                           <td className="p-2">{itm.size || "-"}</td>

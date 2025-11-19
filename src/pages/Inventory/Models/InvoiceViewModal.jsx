@@ -10,7 +10,7 @@ import { Eye, Loader, Calendar, User, Globe, Phone } from "lucide-react";
 const InvoiceViewModal = ({ isOpen, onClose, invoice }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl w-[95vw] bg-background/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl overflow-y-auto max-h-[90vh]">
+      <DialogContent className="max-w-4xl w-[95vw] bg-background/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl overflow-y-auto max-h-[90vh]">
         <DialogHeader className="border-b border-border/40 pb-3">
           <DialogTitle className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
             <Eye className="w-5 h-5 text-primary" />
@@ -124,7 +124,7 @@ const InvoiceViewModal = ({ isOpen, onClose, invoice }) => {
 
                         {/* Item Name or ID */}
                         <td className="px-4 py-2 font-medium">
-                          {`${it.itemId?.itemName.slice(0,20) || it.itemId?._id}...`|| "—"}
+                          {`${it.itemId?.itemName || it.itemId?._id}`|| "—"}
                         </td>
 
                         {/* Size */}
