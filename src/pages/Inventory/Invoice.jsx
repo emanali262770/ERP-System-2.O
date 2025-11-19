@@ -364,6 +364,20 @@ const Invoice = () => {
 
   // Update handleAddItem to handle both add and update
   const handleAddItem = () => {
+    // 🚫 Block duplicate size if stock = 1
+    const selectedSizeObj = availableSizes.find((x) => x.size === size);
+
+    if (selectedSizeObj && selectedSizeObj.stock === 1) {
+      const alreadyUsed = invoiceItems.some(
+        (item) => item.itemId === itemId && item.size === size
+      );
+
+      if (alreadyUsed) {
+        toast.error(`Size ${size} is already added — stock is only 1.`);
+        return; // ⛔ STOP
+      }
+    }
+
     if (!itemId || !quantity || !unitPrice) {
       toast.error("Please fill all item fields");
       return;
@@ -931,7 +945,10 @@ const Invoice = () => {
                   Create Invoice
                 </Button>
               </DialogTrigger>
-              <DialogContent onInteractOutside={(e) => e.preventDefault()} className="max-w-3xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+              <DialogContent
+                onInteractOutside={(e) => e.preventDefault()}
+                className="max-w-3xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl"
+              >
                 <DialogHeader className="border-b border-border/50 pb-4">
                   <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
                     <FileSignature className="w-5 h-5 text-primary" />
@@ -1766,7 +1783,7 @@ const Invoice = () => {
                             )}
 
                             {/* 🗑 Delete - Show for BOTH drafts and finals */}
-                            {item.status !== "Final" && (
+                            {item.status?.toLowerCase() !== "final" && (
                               <Button
                                 variant="ghost"
                                 size="sm"

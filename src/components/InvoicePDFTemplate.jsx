@@ -3,171 +3,101 @@ import React from "react";
 const InvoicePDFTemplate = React.forwardRef(({ invoice }, ref) => {
   if (!invoice) return null;
 
-  // 🧮 Compute totals
-  const netTotal = invoice.items.reduce(
-    (sum, item) => sum + item.quantity * item.unitPrice,
-    0
-  );
-  const vatTotal = invoice.items.reduce(
-    (sum, item) => sum + (item.unitPrice * item.vatRate * item.quantity) / 100,
-    0
-  );
-  const grandTotal = netTotal + vatTotal;
-
-  // 🧠 Conditional VAT mention
-  let vatMention = "";
-  if (invoice.vatRate === 0) {
-    vatMention = "VAT exempt under Article 262-1° of the French Tax Code";
-  } else if (invoice.vatRegime === "VAT Margin") {
-    vatMention =
-      "VAT applied under Margin Scheme – Article 297A of French Tax Code";
-  }
-
-  const companyCode = invoice.companyCode || "XX";
-  const formattedInvoiceNo = `INV-${companyCode}-${invoice.invoiceNo}`;
-
   return (
     <div
       ref={ref}
-      id="invoice-pdf"
-      className="bg-white p-10 text-black text-sm"
-      style={{
-        width: "794px",
-        margin: "0 auto",
-        display: "none",
-        fontFamily: "Arial, sans-serif",
-        position: "relative",
-      }}
+      className="w-[794px] bg-white text-black p-[50px] absolute top-[-9999px] left-[-9999px]"
     >
-      {/* ================= HEADER ================= */}
-      <div className="flex justify-between items-start mb-8">
-        {/* LEFT: Company Info */}
-        <div className="w-1/2 flex gap-4 items-start">
-          <img
-            src="/Images/logoinovice.jfif"
-            alt="Company Logo"
-            className="w-32 mt-1"
-          />
-          <div>
-            <h2 className="font-bold text-lg uppercase tracking-wide">
-              VESTIAIRE ST. HONORÉ
-            </h2>
-            <p className="leading-tight mt-1 text-sm">
-              229 Rue Saint-Honoré
-              <br />
-              75001 Paris, France
-              <br />
-              VAT: FR401234444
-            </p>
-          </div>
-        </div>
-
-        {/* RIGHT: Receiver Info */}
-        <div className="w-1/2 text-right leading-tight text-sm">
-          <h3 className="font-semibold">
-            {invoice.customerName || "John Doe"}
-          </h3>
-          <p>
-            {invoice.customerCompany || "ABC Traders"}
-            <br />
-            {invoice.customerCountry || "France"}
-            <br />
-            {invoice.vatNo && <span>VAT: {invoice.vatNo}</span>}
-          </p>
-        </div>
+      {/* ================= HEADER (COMPANY INFO) ================= */}
+      <div className="mb-6 leading-tight">
+        <h2 className="text-[18px] font-bold">Vestiaire Saint-Honoré</h2>
+        <p className="text-[11px]">229 rue Saint-Honoré</p>
+        <p className="text-[11px]">75001 Paris</p>
+        <p className="text-[11px]">France</p>
+        <p className="text-[11px]">VAT FR401234444</p>
       </div>
 
-      {/* ================= INVOICE META ================= */}
-      <div className="mb-6 border-b pb-3">
+      {/* ================= BILL TO ================= */}
+      <div className="mt-6 mb-5">
+        <h3 className="text-[15px] font-bold mb-1">Bill to :</h3>
+        <p className="text-[11px]">{invoice.customer?.customerName}</p>
+        <p className="text-[11px]">{invoice.customer?.billingAddress}</p>
+        <p className="text-[11px]">{invoice.customer?.country}</p>
+        <p className="text-[11px]">VAT {invoice.customerVAT}</p>
+      </div>
+
+      {/* ================= INVOICE INFO ================= */}
+      <div className="mt-5 mb-7 text-[13px] font-bold space-y-1">
+        <p>Invoice : {invoice.invoiceNo}</p>
         <p>
-          <strong>Invoice No :</strong> {formattedInvoiceNo}
+          Date{" "}
+          {new Date(invoice.invoiceDate).toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+          })}
         </p>
-        <p>
-          <strong>Date :</strong> {invoice.date}
-        </p>
-        {vatMention && (
-          <p className="italic text-gray-700 text-xs mt-1">{vatMention}</p>
-        )}
       </div>
 
       {/* ================= ITEMS TABLE ================= */}
-      <table className="w-full border-collapse text-sm mb-8">
+      <table className="w-full border-collapse text-[11px] mt-3">
         <thead>
-          <tr className="bg-gray-100 border-y border-gray-300">
-            <th className="text-left p-2">Description</th>
-            <th className="text-right p-2">Quantity</th>
-            <th className="text-right p-2">Unit Price</th>
-            <th className="text-right p-2">VAT</th>
-            <th className="text-right p-2">Amount</th>
+          <tr className="border-b border-black">
+            <th className="text-left py-2 font-bold">Item Name</th>
+            <th className="text-left py-2 font-bold">Size</th>
+            <th className="text-left py-2 font-bold">Qty</th>
+            <th className="text-left py-2 font-bold">Unit Price</th>
+            <th className="text-left py-2 font-bold">VAT</th>
+            <th className="text-left py-2 font-bold">Amount</th>
           </tr>
         </thead>
+
         <tbody>
-          {invoice.items.map((item, idx) => (
-            <tr key={idx} className="border-b border-gray-200">
-              <td className="p-2">{item.description}</td>
-              <td className="text-right p-2">{item.quantity}</td>
-              <td className="text-right p-2">
-                {item.unitPrice.toLocaleString()} €
-              </td>
-              <td className="text-right p-2">{item.vatRate}%</td>
-              <td className="text-right p-2">
-                {(item.quantity * item.unitPrice).toLocaleString()} €
-              </td>
+          {invoice.items?.map((item, index) => (
+            <tr key={index} className="border-b border-gray-300">
+              <td className="py-2">{item.itemId?.itemName}</td>
+              <td className="py-2">{item.size}</td>
+              <td className="py-2">{item.quantity}</td>
+              <td className="py-2">{item.unitPrice} €</td>
+              <td className="py-2">{item.vatRate}%</td>
+              <td className="py-2">{item.totalInclVAT} €</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* ================= BANK + TOTALS ================= */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        {/* Bank Details */}
-        <div className="border rounded-md p-4">
-          <h3 className="font-semibold text-blue-700 mb-2">Bank Details</h3>
-          <p>
-            <strong>Bank:</strong> {invoice.bankDetails?.bank || "—"}
-          </p>
-          <p>
-            <strong>Account Number:</strong>{" "}
-            {invoice.bankDetails?.accountNumber || "—"}
-          </p>
-          <p>
-            <strong>Account Type:</strong>{" "}
-            {invoice.bankDetails?.accountType || "—"}
-          </p>
-          <p>
-            <strong>Currency:</strong> {invoice.bankDetails?.currency || "—"}
-          </p>
-          <p>
-            <strong>Payment Reference:</strong>{" "}
-            {invoice.bankDetails?.reference || "—"}
-          </p>
-        </div>
+      {/* ================= BANK DETAILS ================= */}
+      <div className="mt-10">
+        <h3 className="text-[15px] font-bold mb-1">Bank Details</h3>
+        <p className="text-[11px]">Bank : HSBC</p>
+        <p className="text-[11px]">Account Number : 12345673445</p>
+        <p className="text-[11px]">Account Type : Current</p>
+        <p className="text-[11px]">Currency : EUR</p>
+        <p className="text-[11px]">Payment Reference : {invoice.invoiceNo}</p>
+      </div>
 
-        {/* Totals Section */}
-        <div className="border rounded-md p-4">
-          <div className="flex justify-between mb-1">
-            <span>Net amount</span>
-            <span>{netTotal.toLocaleString()} €</span>
-          </div>
-          <div className="flex justify-between mb-1">
-            <span>VAT</span>
-            <span>{vatTotal.toLocaleString()} €</span>
-          </div>
-          <div className="flex justify-between items-center bg-blue-900 text-white font-semibold h-10 pb-2 px-1 mt-3 rounded-md">
-            <p className="inline-flex justify-center items-center">Total</p>
-            <p className="inline-flex justify-center items-center">
-              {grandTotal.toLocaleString()} €
-            </p>
-          </div>
-          <div className="flex justify-between mt-2">
-            <span>Amount Due</span>
-            <span>0.00 €</span>
-          </div>
+      {/* ================= TOTAL BOX ================= */}
+      <div className="border border-gray-400 mt-6 p-4 w-[260px] ml-auto text-[12px] space-y-1">
+        <div className="flex justify-between">
+          <span>Net amount</span>
+          <span>{invoice.netTotal} €</span>
+        </div>
+        <div className="flex justify-between">
+          <span>VAT</span>
+          <span>{invoice.vatTotal} €</span>
+        </div>
+        <div className="flex justify-between font-semibold">
+          <span>Total</span>
+          <span>{invoice.grandTotal} €</span>
+        </div>
+        <div className="flex justify-between font-semibold">
+          <span>Amount Due</span>
+          <span>{invoice.amountDue} €</span>
         </div>
       </div>
 
-      {/* ================= FOOTER NOTE ================= */}
-      <p className="text-xs mt-40 leading-relaxed text-justify text-gray-700">
+      {/* ================= FOOTER ================= */}
+      <p className="text-[10px] mt-10 text-gray-700 leading-[1.35] text-justify">
         No discount will be granted for early settlement. Any late payment shall
         automatically give rise to a penalty calculated at three times the
         statutory interest rate (Article L 441-10, paragraph 12 of the French
@@ -177,11 +107,12 @@ const InvoicePDFTemplate = React.forwardRef(({ invoice }, ref) => {
         French Commercial Code.
       </p>
 
-      {/* ================= FOOTER COMPANY DETAILS ================= */}
-      <p className="text-center text-xs mt-6 font-semibold italic text-gray-800">
+      <p className="text-[10px] text-center mt-5 font-bold">
         VESTIAIRE SAINT-HONORÉ SAS — Share capital of 10,000€ — Company No
         94479826000016
       </p>
+
+      <p className="text-[11px] text-center mt-5">Page 1 / 1</p>
     </div>
   );
 });

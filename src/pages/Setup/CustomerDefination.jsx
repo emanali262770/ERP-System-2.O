@@ -521,7 +521,7 @@ const CustomerDefinition = () => {
                         Billing Address<span className="text-red-500">*</span>
                       </Label>
                       <Input
-                        placeholder="Street 12, Karachi"
+                        placeholder="Street 12, "
                         value={newCustomer.billingAddress}
                         onChange={(e) =>
                           setNewCustomer({

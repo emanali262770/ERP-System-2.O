@@ -20,16 +20,16 @@ const StockPosition = () => {
 
   // Normalize size
   const normalizeSize = (size) => {
-  if (!size) return "";
-  const s = size.toUpperCase();
+    if (!size) return "";
+    const s = size.toUpperCase();
 
-  if (s === "SM") return "S";
-  if (s === "MD") return "M";
-  if (s === "XXL") return "2XL";   // ⭐ ADD THIS
+    if (s === "SM") return "S";
+    if (s === "MD") return "M";
+    if (s === "LG") return "L"; // ⭐ FIX
+    if (s === "XXL") return "2XL";
 
-  return s;
-};
-
+    return s;
+  };
 
   // ⭐ NEW: Fetch all items for dropdown
   const fetchItems = async () => {
@@ -64,8 +64,18 @@ const StockPosition = () => {
     fetchItems();
   }, []);
 
-  const sizePriority = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"];
-
+  const sizePriority = [
+    "XS",
+    "S",
+    "M",
+    "L",
+    "XL",
+    "2XL",
+    "3XL",
+    "4XL",
+    "5XL",
+    "6XL",
+  ];
 
   const sortedSizes = (sizes) =>
     sizes.sort((a, b) => sizePriority.indexOf(a) - sizePriority.indexOf(b));
