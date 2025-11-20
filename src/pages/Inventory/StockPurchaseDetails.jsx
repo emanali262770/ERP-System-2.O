@@ -303,7 +303,7 @@ const StockPurchaseDetails = () => {
     if (itemId) {
       const item = itemNames.find((i) => i._id === itemId);
       if (item) {
-        fetchSizesByCategory(item.category, item.itemName);
+       fetchSizesByCategory(item.category.categoryName, item.itemName);
       }
     }
   }, [itemId, itemNames]);
@@ -520,10 +520,12 @@ const StockPurchaseDetails = () => {
 
       if (res.data?.success) {
         toast.success("Stock deleted successfully!");
-        fetchStock(); // refresh table
+         // refresh table
+          fetchStock();
       } else {
         toast.error(res.data?.message || "Failed to delete Stock");
       }
+     
     } catch (error) {
       toast.dismiss();
       console.error("Error deleting Stock:", error);
@@ -531,7 +533,10 @@ const StockPurchaseDetails = () => {
         error.response?.data?.message || "Server error while deleting"
       );
     } finally {
-      setTimeout(() => setLoading(false), 1000);
+      setTimeout(() => {
+          setLoading(false);
+      }, 1200);
+    
     }
   };
 
@@ -663,7 +668,7 @@ const StockPurchaseDetails = () => {
                 </Button>
               </DialogTrigger>
 
-              <DialogContent  onInteractOutside={(e) => e.preventDefault()} className="max-w-2xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+              <DialogContent  onInteractOutside={(e) => e.preventDefault()} className="max-w-3xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
                 <DialogHeader className="border-b border-border/50 pb-4">
                   <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
                     <Plus className="w-5 h-5 text-primary" />
@@ -816,10 +821,12 @@ const StockPurchaseDetails = () => {
                             if (item) {
                               // Auto Fill Purchase Price
                               setUnitCost(item.purchasePrice || 0);
+                              console.log(item);
+                              
 
                               // Fetch Sizes With Stock
                               fetchSizesByCategory(
-                                item.category,
+                                item.category.categoryName,
                                 item.itemName
                               );
                             } else {

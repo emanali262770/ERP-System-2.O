@@ -347,10 +347,7 @@ const Invoice = () => {
     if (selectedItem) {
       try {
         const res = await api.get(
-          `/categories/sizes-available/${selectedItem.category.replace(
-            /\s+/g,
-            ""
-          )}`
+          `/categories/sizes-available/${selectedItem.category.categoryName}`
         );
         setAvailableSizes(res.data.data?.sizes || []);
       } catch (err) {
@@ -511,6 +508,7 @@ const Invoice = () => {
   // Handle Finalize Invoice
   const handleFinalizeInvoice = async (invoiceId) => {
     try {
+      setLoading(true)
       toast.loading("Finalizing invoice...");
 
       const response = await api.put(
@@ -534,6 +532,10 @@ const Invoice = () => {
       toast.dismiss();
       console.error("Error finalizing invoice:", error);
       toast.error(error.response?.data?.message || "Error finalizing invoice");
+    }finally{
+      setTimeout(() => {
+        setLoading(false)
+      }, 2000);
     }
   };
 
@@ -1079,7 +1081,7 @@ const Invoice = () => {
                                 // 🚀 GET SIZES FROM CATEGORY API
                                 try {
                                   const res = await api.get(
-                                    `/categories/sizes-available/${selectedItem.category}`
+                                    `/categories/sizes-available/${selectedItem.category.categoryName}`
                                   );
 
                                   setAvailableSizes(
