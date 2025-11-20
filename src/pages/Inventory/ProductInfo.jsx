@@ -313,7 +313,7 @@ const ProductInfo = () => {
     setItemName(productToEdit.itemName || "");
     setSku(productToEdit.sku || "");
     setBarcode(productToEdit.barcode || "");
-    setSelectedCategory(productToEdit.category || "");
+    setSelectedCategory(productToEdit.category._id || "");
     setSelectedSize(productToEdit.size || "");
     setItemCode(productToEdit.itemCode || "");
     setImagePreview(productToEdit.image || null);
@@ -384,6 +384,7 @@ const ProductInfo = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
+console.log({currentProducts});
 
   return (
     <DashboardLayout>
@@ -488,7 +489,7 @@ const ProductInfo = () => {
                               categories.map((cat) => (
                                 <SelectItem
                                   key={cat._id}
-                                  value={cat.categoryName}
+                                  value={cat._id}
                                   className="hover:bg-blue-600 hover:text-white transition-colors"
                                 >
                                   <div className="flex items-center gap-2">
@@ -769,10 +770,10 @@ const ProductInfo = () => {
                             <Badge
                               variant="outline"
                               className={`${getCategoryColor(
-                                item.category
+                                item.category.categoryName
                               )} border-2 font-medium text-xs px-2 py-1 rounded-full`}
                             >
-                              {item.category || "-"}
+                              {item.category.categoryName || "-"}
                             </Badge>
                           </td>
                         )}
