@@ -56,6 +56,10 @@ import InvoiceViewModal from "../Inventory/Models/InvoiceViewModal";
 
 const Invoice = () => {
   const [qtyError, setQtyError] = useState("");
+  const [isCreditNoteOpen, setIsCreditNoteOpen] = useState(false);
+  const [creditNoteInvoice, setCreditNoteInvoice] = useState(null);
+  const [creditNoteItems, setCreditNoteItems] = useState([]);
+  const [creditTotal, setCreditTotal] = useState(0);
 
   const [saving, setSaving] = useState(false);
   const [availableSizes, setAvailableSizes] = useState([]);
@@ -721,6 +725,7 @@ const Invoice = () => {
 
   const filteredFinals = finalInvoices
     .map((inv) => ({
+      ...inv,
       _id: inv._id,
       invoiceNo: inv.invoiceNo,
       date: new Date(inv.invoiceDate).toLocaleDateString(),
@@ -911,6 +916,66 @@ const Invoice = () => {
     }
   };
   console.log({ draftInvoices });
+  const handleCreditNote = (invoice) => {
+    setCreditNoteInvoice(invoice);
+
+    const mappedItems = invoice.items.map((it) => ({
+      ...it,
+      isRemoved: false, // user remove karega tab true hoga
+    }));
+
+    setCreditNoteItems(mappedItems);
+    setIsCreditNoteOpen(true);
+  };
+  const toggleItemRemove = (index) => {
+    const updated = [...creditNoteItems];
+    updated[index].isRemoved = !updated[index].isRemoved;
+
+    setCreditNoteItems(updated);
+
+    // recalculate credit amount
+    const total = updated
+      .filter((it) => it.isRemoved)
+      .reduce((sum, it) => sum + it.totalInclVAT, 0);
+
+    setCreditTotal(total);
+  };
+  const handleSaveCreditNote = async () => {
+    try {
+      const removedItems = creditNoteItems.filter((it) => it.isRemoved);
+
+      if (removedItems.length === 0) {
+        toast.error("Please remove at least one item!");
+        return;
+      }
+
+      const payload = {
+        originalInvoiceId: creditNoteInvoice._id,
+        creditAmount: creditTotal,
+        removedItems: removedItems.map((it) => ({
+          itemId: it.itemId?._id || it.itemId,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          vatRate: it.vatRate,
+        })),
+      };
+
+      const response = await api.post("/inventory/credit-notes", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data.success) {
+        toast.success("Credit note created successfully!");
+        setIsCreditNoteOpen(false);
+        fetchInvoices();
+      } else {
+        toast.error("Failed to create credit note");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error creating credit note");
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -1708,6 +1773,15 @@ const Invoice = () => {
                                 >
                                   <DownloadIcon className="w-4 h-4" />
                                 </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600"
+                                  title="Create Credit Note"
+                                  onClick={() => handleCreditNote(item)}
+                                >
+                                  <FileSignature className="w-4 h-4" />
+                                </Button>
                               </>
                             )}
 
@@ -1831,6 +1905,62 @@ const Invoice = () => {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={isCreditNoteOpen} onOpenChange={setIsCreditNoteOpen}>
+        <DialogContent className="max-w-3xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Create Credit Note for {creditNoteInvoice?.invoiceNo}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* ITEMS LIST */}
+            <table className="w-full border">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-2 text-left">Item</th>
+                  <th className="p-2 text-left">Qty</th>
+                  <th className="p-2 text-left">Price</th>
+                  <th className="p-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {creditNoteItems.map((it, i) => (
+                  <tr key={i} className="border-t">
+                    <td className="p-2">{it.itemId?.itemName}</td>
+                    <td className="p-2">{it.quantity}</td>
+                    <td className="p-2">€{it.unitPrice}</td>
+
+                    <td className="p-2">
+                      <Button
+                        variant={it.isRemoved ? "destructive" : "outline"}
+                        size="sm"
+                        onClick={() => toggleItemRemove(i)}
+                      >
+                        {it.isRemoved ? "Undo" : "Remove"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* TOTAL */}
+            <div className="mt-4 font-semibold">
+              Credit Note Total: € {creditTotal.toFixed(2)}
+            </div>
+
+            {/* SAVE */}
+            <Button
+              onClick={handleSaveCreditNote}
+              className="w-full bg-purple-600 text-white"
+            >
+              Create Credit Note
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <InvoiceViewModal
         isOpen={isViewOpen}
         onClose={setIsViewOpen}
