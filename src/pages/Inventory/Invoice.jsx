@@ -61,11 +61,11 @@ const Invoice = () => {
   const [creditNoteInvoice, setCreditNoteInvoice] = useState(null);
   const [creditNoteItems, setCreditNoteItems] = useState([]);
   const [creditTotal, setCreditTotal] = useState(0);
-const [creditNoteNumber, setCreditNoteNumber] = useState("");
-const [manualAmount, setManualAmount] = useState("");
-const [isQtyEditOpen, setIsQtyEditOpen] = useState(false);
-const [editIndex, setEditIndex] = useState(null);
-const [editQty, setEditQty] = useState("");
+  const [creditNoteNumber, setCreditNoteNumber] = useState("");
+  const [manualAmount, setManualAmount] = useState("");
+  const [isQtyEditOpen, setIsQtyEditOpen] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+  const [editQty, setEditQty] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [availableSizes, setAvailableSizes] = useState([]);
@@ -116,6 +116,7 @@ const [editQty, setEditQty] = useState("");
   const [totalExclVAT, setTotalExclVAT] = useState(0);
   const [vatAmount, setVatAmount] = useState(0);
   const [totalInclVAT, setTotalInclVAT] = useState(0);
+  const [manualInclVATMode, setManualInclVATMode] = useState(false);
 
   // Multiple items list
   const [invoiceItems, setInvoiceItems] = useState([]);
@@ -123,6 +124,8 @@ const [editQty, setEditQty] = useState("");
 
   // Auto calculate totals
   useEffect(() => {
+    if (manualInclVATMode) return; // do nothing if user typed green box manually
+
     const qty = Number(quantity) || 0;
     const price = Number(unitPrice) || 0;
     const vat = Number(vatRate) || 0;
@@ -135,6 +138,10 @@ const [editQty, setEditQty] = useState("");
     setVatAmount(vatAmt);
     setTotalInclVAT(incl);
   }, [quantity, unitPrice, vatRate]);
+
+  useEffect(() => {
+    setManualInclVATMode(false);
+  }, [quantity, unitPrice]);
 
   const { token } = useAuth();
   const pdfRef = useRef();
@@ -947,70 +954,69 @@ const [editQty, setEditQty] = useState("");
     setCreditTotal(total);
   };
   const startEditQty = (index, item) => {
-  setEditIndex(index);
-  setEditQty(item.quantity);
-  setIsQtyEditOpen(true);
-};
+    setEditIndex(index);
+    setEditQty(item.quantity);
+    setIsQtyEditOpen(true);
+  };
 
-const applyQtyChange = () => {
-  const updated = [...creditNoteItems];
-  updated[editIndex].quantity = Number(editQty);
+  const applyQtyChange = () => {
+    const updated = [...creditNoteItems];
+    updated[editIndex].quantity = Number(editQty);
 
-  // Recalculate total
-  updated[editIndex].totalInclVAT =
-    updated[editIndex].quantity *
-    updated[editIndex].unitPrice *
-    (1 + updated[editIndex].vatRate / 100);
+    // Recalculate total
+    updated[editIndex].totalInclVAT =
+      updated[editIndex].quantity *
+      updated[editIndex].unitPrice *
+      (1 + updated[editIndex].vatRate / 100);
 
-  setCreditNoteItems(updated);
-  setIsQtyEditOpen(false);
-  calculateCreditTotal(updated);
-};
+    setCreditNoteItems(updated);
+    setIsQtyEditOpen(false);
+    calculateCreditTotal(updated);
+  };
 
-const handleCreateDraftCreditNote = async () => {
-  try {
-    const removed = creditNoteItems.filter((i) => i.isRemoved);
-    if (removed.length === 0) return toast.error("Remove at least one item");
+  const handleCreateDraftCreditNote = async () => {
+    try {
+      const removed = creditNoteItems.filter((i) => i.isRemoved);
+      if (removed.length === 0) return toast.error("Remove at least one item");
 
-    const payload = {
-      items: removed.map((it) => ({
-        itemId: it.itemId?._id || it.itemId,
-        quantity: it.quantity,
-        unitPrice: it.unitPrice,
-        vatRate: it.vatRate,
-      })),
-    };
+      const payload = {
+        items: removed.map((it) => ({
+          itemId: it.itemId?._id || it.itemId,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          vatRate: it.vatRate,
+        })),
+      };
 
-    const res = await api.post(
-      `/inventory/credit-note/draft/${creditNoteInvoice._id}`,
-      payload,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const res = await api.post(
+        `/inventory/credit-note/draft/${creditNoteInvoice._id}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    setCreditNoteNumber(res.data.data.creditNoteNo);
-    setDraftId(res.data.data._id);
+      setCreditNoteNumber(res.data.data.creditNoteNo);
+      setDraftId(res.data.data._id);
 
-    toast.success("Draft credit note created");
-  } catch (e) {
-    toast.error("Error creating draft");
-  }
-};
-const handleFinalizeCreditNote = async () => {
-  try {
-    const res = await api.post(
-      `/inventory/credit-note/finalize/${draftId}`,
-      { manualAmount: manualAmount || null },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      toast.success("Draft credit note created");
+    } catch (e) {
+      toast.error("Error creating draft");
+    }
+  };
+  const handleFinalizeCreditNote = async () => {
+    try {
+      const res = await api.post(
+        `/inventory/credit-note/finalize/${draftId}`,
+        { manualAmount: manualAmount || null },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    toast.success("Credit note finalized!");
-    setIsCreditNoteOpen(false);
-    fetchInvoices();
-  } catch (e) {
-    toast.error("Error finalizing credit note");
-  }
-};
-
+      toast.success("Credit note finalized!");
+      setIsCreditNoteOpen(false);
+      fetchInvoices();
+    } catch (e) {
+      toast.error("Error finalizing credit note");
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -1344,7 +1350,7 @@ const handleFinalizeCreditNote = async () => {
                       <div className="space-y-2">
                         <Label>Total Excl. VAT</Label>
                         <Input
-                          value={totalExclVAT}
+                          value={Number(totalExclVAT).toFixed(2)}
                           readOnly
                           className="border-2 bg-gray-100"
                         />
@@ -1354,7 +1360,7 @@ const handleFinalizeCreditNote = async () => {
                       <div className="space-y-2">
                         <Label>VAT Amount</Label>
                         <Input
-                          value={vatAmount}
+                          value={Number(vatAmount).toFixed(2)}
                           readOnly
                           className="border-2 bg-gray-100"
                         />
@@ -1365,9 +1371,23 @@ const handleFinalizeCreditNote = async () => {
                     <div className="space-y-2 mt-4">
                       <Label>Total Incl. VAT</Label>
                       <Input
-                        value={totalInclVAT}
-                        readOnly
-                        className="border-2 bg-gray-100"
+                        type="number"
+                        value={Number(totalInclVAT).toFixed(2)}
+                        onChange={(e) => {
+                          const incl = Number(e.target.value) || 0;
+                          setManualInclVATMode(true);
+                          setTotalInclVAT(Number(incl.toFixed(2)));
+
+                          const vatMultiplier = 1 + Number(vatRate) / 100;
+
+                          const excl =
+                            Math.floor((incl / vatMultiplier) * 100) / 100;
+                          setTotalExclVAT(excl);
+
+                          const vatAmt = Number((incl - excl).toFixed(2));
+                          setVatAmount(vatAmt);
+                        }}
+                        className="border-2"
                       />
                     </div>
 
@@ -1413,7 +1433,7 @@ const handleFinalizeCreditNote = async () => {
                                     <td className="p-2">{it.size || "-"}</td>
                                   )}
                                   <td className="p-2">{it.quantity}</td>
-                                  <td className="p-2">€{it.unitPrice}</td>
+                                  <td className="p-2">€{it.unitPrice.toFixed(2)}</td>
                                   <td className="p-2">{it.vatRate}%</td>
                                   <td className="p-2 font-semibold">
                                     €{it.totalInclVAT?.toFixed(2)}
