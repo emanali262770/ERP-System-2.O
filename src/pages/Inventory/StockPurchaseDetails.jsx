@@ -212,7 +212,8 @@ const StockPurchaseDetails = () => {
       setItemNameLoading(true);
 
       // NEW API ENDPOINT
-      const res = await api.get("/inventory/items");
+      const res = await api.get("/inventory/items/name");
+      // console.log("Response", res.data.data);
 
       if (res.data.success) {
         // res.data.data = array of items
@@ -281,9 +282,8 @@ const StockPurchaseDetails = () => {
       if (!category || !itemName) return;
       setSizesLoading(true);
 
-      const res = await api.get(
-        `/categories/sizes/${category}?itemName=${itemName}`
-      );
+      const res = await api.get(`/inventory/items/sizes/${itemId}`);
+      // console.log("New", res.data.data);
 
       if (res.data.success) {
         const sizes = res.data.data.sizes || [];
@@ -303,7 +303,7 @@ const StockPurchaseDetails = () => {
     if (itemId) {
       const item = itemNames.find((i) => i._id === itemId);
       if (item) {
-       fetchSizesByCategory(item.category.categoryName, item.itemName);
+        fetchSizesByCategory(item.category.categoryName, item.itemName);
       }
     }
   }, [itemId, itemNames]);
@@ -520,12 +520,11 @@ const StockPurchaseDetails = () => {
 
       if (res.data?.success) {
         toast.success("Stock deleted successfully!");
-         // refresh table
-          fetchStock();
+        // refresh table
+        fetchStock();
       } else {
         toast.error(res.data?.message || "Failed to delete Stock");
       }
-     
     } catch (error) {
       toast.dismiss();
       console.error("Error deleting Stock:", error);
@@ -534,9 +533,8 @@ const StockPurchaseDetails = () => {
       );
     } finally {
       setTimeout(() => {
-          setLoading(false);
+        setLoading(false);
       }, 1200);
-    
     }
   };
 
@@ -624,7 +622,9 @@ const StockPurchaseDetails = () => {
     setAvailableSizes([]);
   };
 
-  console.log({ summary });
+  // console.log("sizes", size);
+
+  // console.log({ summary });
 
   return (
     <DashboardLayout>
@@ -668,7 +668,10 @@ const StockPurchaseDetails = () => {
                 </Button>
               </DialogTrigger>
 
-              <DialogContent  onInteractOutside={(e) => e.preventDefault()} className="max-w-3xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl">
+              <DialogContent
+                onInteractOutside={(e) => e.preventDefault()}
+                className="max-w-3xl max-h-full overflow-y-scroll bg-background/95 backdrop-blur-sm border-0 shadow-2xl"
+              >
                 <DialogHeader className="border-b border-border/50 pb-4">
                   <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
                     <Plus className="w-5 h-5 text-primary" />
@@ -822,7 +825,6 @@ const StockPurchaseDetails = () => {
                               // Auto Fill Purchase Price
                               setUnitCost(item.purchasePrice || 0);
                               console.log(item);
-                              
 
                               // Fetch Sizes With Stock
                               fetchSizesByCategory(
@@ -1151,8 +1153,6 @@ const StockPurchaseDetails = () => {
               </div>
             </CardContent>
           </Card>
-
-       
 
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-4">
