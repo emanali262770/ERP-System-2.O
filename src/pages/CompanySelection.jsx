@@ -20,7 +20,14 @@ const CompanySelection = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await api.get("/companies"); // same API as upper page
+        const token = localStorage.getItem("token");
+
+        const res = await api.get("/companies/assigned", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        // same API as upper page
         setCompanies(res.data.data || []);
       } catch (error) {
         console.error("Error fetching companies", error);
