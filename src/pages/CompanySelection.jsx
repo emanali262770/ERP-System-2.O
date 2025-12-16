@@ -42,10 +42,35 @@ const CompanySelection = () => {
 
   const navigate = useNavigate();
 
-  const selectCompany = (company) => {
-    toast.success(`Switched to ${company.companyName}`);
-    localStorage.setItem("selectedCompany", JSON.stringify(company));
-    navigate("/dashboard");
+  const selectCompany = async (company) => {
+    try {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      const res = await api.post(
+        "/auth/login/company",
+        {
+          email: user.email,
+          companyId: company._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // ✅ Reset token & user from response
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+
+      toast.success(`Switched to ${company.companyName}`);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Company switch failed", error);
+      toast.error("Failed to switch company");
+    }
   };
 
   return (
