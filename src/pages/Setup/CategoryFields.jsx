@@ -631,9 +631,9 @@ const CategoryPage = () => {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
                       Sizes
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                    {/* <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
                       Stock
-                    </th>
+                    </th> */}
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground/80 uppercase tracking-wider">
                       Status
                     </th>
@@ -678,11 +678,11 @@ const CategoryPage = () => {
                               ? category.sizes.join(", ")
                               : "-"}
                           </td>
-                           <td className="px-6 py-4">
+                           {/* <td className="px-6 py-4">
                             {Array.isArray(category.stock)
                               ? category.stock.join(", ")
                               : "-"}
-                          </td>
+                          </td> */}
 
                           <td className="px-6 py-4">
                             <Badge
