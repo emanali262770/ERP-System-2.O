@@ -212,7 +212,11 @@ const StockPurchaseDetails = () => {
       setItemNameLoading(true);
 
       // NEW API ENDPOINT
-      const res = await api.get("/inventory/items/name");
+      const res = await api.get("/inventory/items/name",{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       // console.log("Response", res.data.data);
 
       if (res.data.success) {
@@ -236,7 +240,11 @@ const StockPurchaseDetails = () => {
   const fetchWarehouses = async () => {
     try {
       setWarehouseLoading(true);
-      const res = await api.get("/warehouses");
+      const res = await api.get("/warehouses",{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (res.data.success) {
         setWarehouses(res.data.data);
@@ -254,7 +262,11 @@ const StockPurchaseDetails = () => {
   const fetchSuppliers = async () => {
     try {
       setSupplierLoading(true);
-      const res = await api.get("/suppliers");
+      const res = await api.get("/suppliers",{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (res.data.success) {
         setSuppliers(res.data.data);
@@ -282,7 +294,11 @@ const StockPurchaseDetails = () => {
       if (!category || !itemName) return;
       setSizesLoading(true);
 
-      const res = await api.get(`/inventory/items/sizes/${itemId}`);
+      const res = await api.get(`/inventory/items/sizes/${itemId}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       // console.log("New", res.data.data);
 
       if (res.data.success) {

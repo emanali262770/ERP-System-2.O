@@ -241,7 +241,7 @@ const ProductInfo = () => {
 
       const formData = new FormData();
       if (selectedFile) formData.append("itemImage", selectedFile);
-      formData.append("itemCode", itemCode);
+      // formData.append("itemCode", itemCode);
       formData.append("itemName", itemName);
       formData.append("category", selectedCategory);
       formData.append("sku", sku);
