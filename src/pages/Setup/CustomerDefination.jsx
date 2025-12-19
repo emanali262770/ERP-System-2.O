@@ -150,6 +150,22 @@ const CustomerDefinition = () => {
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [fieldLimitAlert, setFieldLimitAlert] = useState(false);
 
+  const generateCustomerCode = useCallback(() => {
+    if (customerList.length > 0) {
+      const maxNo = Math.max(
+        ...customerList.map((c) => {
+          const match = c.customerCode?.match(/CUST(\d+)/);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+      );
+
+      return `CUST${String(maxNo + 1).padStart(3, "0")}`;
+    }
+
+    return "CUST001";
+  }, [customerList]);
+
+
   // Fetch Customer Data
   const fetchCustomerList = useCallback(async () => {
     try {
@@ -272,9 +288,8 @@ const CustomerDefinition = () => {
         city: newCustomer.city,
         postalCode: newCustomer.postalCode,
         country: newCustomer.country,
-        vatNumber: `${newCustomer.vatPrefix || ""}${
-          newCustomer.vatNumber || ""
-        }`,
+        vatNumber: `${newCustomer.vatPrefix || ""}${newCustomer.vatNumber || ""
+          }`,
         customerType: newCustomer.customerType,
         defaultVatRate: newCustomer.defaultVatRate,
       };
@@ -416,28 +431,29 @@ const CustomerDefinition = () => {
               <DialogTrigger asChild>
                 <Button
                   onClick={() => {
-                    // 👇 force fresh code calculation
-                    if (customerList.length > 0) {
-                      const codes = customerList
-                        .map((c) =>
-                          parseInt(c.customerCode?.replace(/\D/g, ""), 10)
-                        )
-                        .filter((n) => !isNaN(n));
-
-                      const maxCode = Math.max(...codes, 0);
-                      const nextCode = `CUST${String(maxCode + 1).padStart(
-                        3,
-                        "0"
-                      )}`;
-
-                      setNewCustomer((prev) => ({
-                        ...prev,
-                        customerCode: nextCode,
-                      }));
-                    }
-
-                    clearForm();
+                    // 🧠 reset edit mode
                     setEditingCustomer(null);
+
+                    // ✅ generate new customer code (LIKE PRODUCT)
+                    const nextCode = generateCustomerCode();
+
+                    setNewCustomer({
+                      customerCode: nextCode,
+                      customerName: "",
+                      phoneNumber: "",
+                      email: "",
+                      billingAddress: "",
+                      city: "",
+                      postalCode: "",
+                      country: "",
+                      vatPrefix: "",
+                      vatNumber: "",
+                      customerType: "",
+                      vatRegime: "",
+                      defaultVatRate: "",
+                      paymentTerms: "",
+                      categoryId: "",
+                    });
                   }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -737,8 +753,8 @@ const CustomerDefinition = () => {
                         ? "Updating..."
                         : "Saving..."
                       : editingCustomer
-                      ? "Update Customer"
-                      : "Save Customer"}
+                        ? "Update Customer"
+                        : "Save Customer"}
                   </Button>
                 </div>
               </DialogContent>
