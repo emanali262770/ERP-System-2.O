@@ -7,6 +7,7 @@ import { Search, Package, Loader, Warehouse, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../Api/AxiosInstance";
 import Pagination from "../../components/Pagination";
+import { useAuth } from "../../context/AuthContext";
 
 const DraftTrack = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,12 +15,16 @@ const DraftTrack = () => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-
+  const { token } = useAuth();
   // Fetch stock data
   const fetchStock = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/inventory/purchases?status=Pending");
+      const res = await api.get("/inventory/purchases?status=Pending", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (res.data.success) {
         setStockData(res.data.data);
@@ -61,12 +66,20 @@ const DraftTrack = () => {
     try {
       setLoading(true);
 
-      const res = await api.post(`/inventory/purchases/receive/${purchaseId}`);
+      const res = await api.post(
+        `/inventory/purchases/receive/${purchaseId}`,
+        null, // ✅ important
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (res.data.success) {
         toast.success("Purchase marked as RECEIVED successfully!");
         fetchStock(); // Refresh pending list
-         window.location.reload();
+        window.location.reload();
       } else {
         toast.error("Failed to update purchase status!");
       }

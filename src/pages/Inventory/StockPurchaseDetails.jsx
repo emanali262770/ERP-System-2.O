@@ -212,7 +212,7 @@ const StockPurchaseDetails = () => {
       setItemNameLoading(true);
 
       // NEW API ENDPOINT
-      const res = await api.get("/inventory/items/name",{
+      const res = await api.get("/inventory/items/name", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -235,12 +235,12 @@ const StockPurchaseDetails = () => {
     }
   };
 
-  // console.log({ itemNames });
+  console.log({ itemNames });
 
   const fetchWarehouses = async () => {
     try {
       setWarehouseLoading(true);
-      const res = await api.get("/warehouses",{
+      const res = await api.get("/warehouses", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -262,7 +262,7 @@ const StockPurchaseDetails = () => {
   const fetchSuppliers = async () => {
     try {
       setSupplierLoading(true);
-      const res = await api.get("/suppliers",{
+      const res = await api.get("/suppliers", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -289,17 +289,17 @@ const StockPurchaseDetails = () => {
     }
   }, [isAddOpen]);
 
-  const fetchSizesByCategory = async (category, itemName) => {
+  const fetchSizesByCategory = async () => {
     try {
-      if (!category || !itemName) return;
+      if (!itemId) return;
+
       setSizesLoading(true);
 
-      const res = await api.get(`/inventory/items/sizes/${itemId}`,{
+      const res = await api.get(`/inventory/items/sizes/${itemId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      // console.log("New", res.data.data);
 
       if (res.data.success) {
         const sizes = res.data.data.sizes || [];
@@ -309,6 +309,9 @@ const StockPurchaseDetails = () => {
         setSizesList([]);
         setAvailableSizes([]);
       }
+    } catch (err) {
+      setSizesList([]);
+      setAvailableSizes([]);
     } finally {
       setSizesLoading(false);
     }
@@ -316,13 +319,10 @@ const StockPurchaseDetails = () => {
 
   // select item name auto select decription
   useEffect(() => {
-    if (itemId) {
-      const item = itemNames.find((i) => i._id === itemId);
-      if (item) {
-        fetchSizesByCategory(item.category.categoryName, item.itemName);
-      }
-    }
-  }, [itemId, itemNames]);
+    if (!itemId) return;
+
+    fetchSizesByCategory();
+  }, [itemId]);
 
   // Auto-generate Purchase No based on highest existing number
   useEffect(() => {
@@ -843,10 +843,7 @@ const StockPurchaseDetails = () => {
                               console.log(item);
 
                               // Fetch Sizes With Stock
-                              fetchSizesByCategory(
-                                item.category.categoryName,
-                                item.itemName
-                              );
+                              fetchSizesByCategory();
                             } else {
                               setAvailableSizes([]);
                             }

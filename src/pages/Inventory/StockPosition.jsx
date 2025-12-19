@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import api from "../../Api/AxiosInstance";
 import { Package, X } from "lucide-react";
 import Pagination from "../../components/Pagination";
+import { useAuth } from "../../context/AuthContext";
 
 const StockPosition = () => {
   const [allItems, setAllItems] = useState([]);
@@ -17,7 +18,7 @@ const StockPosition = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [grandTotalStockValue, setGrandTotalStockValue] = useState(0);
-
+  const { token } = useAuth();
   // Normalize size
   const normalizeSize = (size) => {
     if (!size) return "";
@@ -35,7 +36,11 @@ const StockPosition = () => {
   const fetchItems = async () => {
     try {
       setItemsLoading(true);
-      const res = await api.get("/inventory/items");
+      const res = await api.get("/inventory/items",{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setAllItems(res.data.data);
     } catch (err) {
       console.log("Error loading items");
@@ -48,7 +53,11 @@ const StockPosition = () => {
     try {
       setLoading(true);
 
-      const res = await api.get("/inventory/items/stock-position");
+      const res = await api.get("/inventory/items/stock-position",{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       setStockPositionData(res.data.data);
       setGrandTotalStockValue(res.data.grandTotalStockValue || 0);

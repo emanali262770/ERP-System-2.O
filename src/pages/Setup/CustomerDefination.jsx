@@ -312,7 +312,7 @@ const CustomerDefinition = () => {
       fetchCustomerList();
     } catch (error) {
       console.error("Failed to save customer:", error);
-      toast.error(error?.response?.data?.message || "Something went wrong!");
+      toast.error(error?.response?.data?.errors || "Something went wrong!");
     } finally {
       setSaving(false);
     }
