@@ -323,10 +323,10 @@ const filterNavigation=navigation.filter((item)=> !item.roles || item.roles.incl
               <Building2 className="w-6 h-6 text-primary" />
               <div className="hidden sm:block">
                 <h2 className="font-semibold text-foreground">
-                  {selectedCompany.name || "Select Company"}
+                 {user.companyName || "Select Company"}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {selectedCompany.role || "Role"}
+                   {user.role || "Role"}
                 </p>
               </div>
             </div>

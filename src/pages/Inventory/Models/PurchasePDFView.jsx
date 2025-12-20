@@ -3,16 +3,21 @@ import { useEffect, useState } from "react";
 
 import { Loader } from "lucide-react";
 import api from "../../../Api/AxiosInstance";
+import { useAuth } from "../../../context/AuthContext";
 
 const PurchasePDFView = () => {
   const { id } = useParams();
   const [pdfUrl, setPdfUrl] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const { token } = useAuth();
   useEffect(() => {
     const fetchPDF = async () => {
       try {
-        const res = await api.get(`/inventory/purchases/${id}`);
+        const res = await api.get(`/inventory/purchases/${id}`,{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setPdfUrl(res.data.data?.supplierInvoice?.url || null);
       } catch (err) {
         setPdfUrl(null);
