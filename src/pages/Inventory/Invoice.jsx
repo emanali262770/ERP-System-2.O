@@ -317,7 +317,7 @@ const Invoice = () => {
       setStatus(fullInvoice.status || "Draft");
       setInvoiceDate(
         fullInvoice.invoiceDate?.split("T")[0] ||
-          new Date().toISOString().split("T")[0]
+        new Date().toISOString().split("T")[0]
       );
 
       // Set invoice items
@@ -364,7 +364,9 @@ const Invoice = () => {
     if (selectedItem) {
       try {
         const res = await api.get(
-          `/categories/sizes-available/${selectedItem.category.categoryName}`
+          `/categories/sizes-available/${selectedItem.category.categoryName}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }
         );
         setAvailableSizes(res.data.data?.sizes || []);
       } catch (err) {
@@ -532,7 +534,7 @@ const Invoice = () => {
       toast.loading("Finalizing invoice...");
 
       const response = await api.put(
-        `/inventory/invoice/finalize/${invoiceId}`,
+        `/inventory/invoice/finalize/${invoiceId}`,{},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -671,8 +673,7 @@ const Invoice = () => {
 
       if (response.data.success) {
         toast.success(
-          `Invoice ${
-            status === "Final" ? "finalized" : isEditMode ? "updated" : "saved"
+          `Invoice ${status === "Final" ? "finalized" : isEditMode ? "updated" : "saved"
           } successfully!`
         );
         setIsAddOpen(false);
@@ -892,9 +893,8 @@ const Invoice = () => {
         const payload = {
           to: invoice.customer?.email || "emanali262770@gmail.com",
           subject: `Your Invoice ${invoice.invoiceNo} from VESTIAIRE ST. HONORÉ`,
-          message: `Hello ${
-            invoice.customer?.customerName || invoice.customerName || "Customer"
-          }, please find your invoice attached.`,
+          message: `Hello ${invoice.customer?.customerName || invoice.customerName || "Customer"
+            }, please find your invoice attached.`,
         };
 
         const response = await api.post(
@@ -919,8 +919,7 @@ const Invoice = () => {
       const phone = invoice.phoneNumber || "03184486979";
 
       const msg = encodeURIComponent(
-        `Hello ${invoice.customerName || "Customer"}, your invoice ${
-          invoice.invoiceNo
+        `Hello ${invoice.customerName || "Customer"}, your invoice ${invoice.invoiceNo
         } is ready.`
       );
 
@@ -1190,7 +1189,9 @@ const Invoice = () => {
                                 // 🚀 GET SIZES FROM CATEGORY API
                                 try {
                                   const res = await api.get(
-                                    `/categories/sizes-available/${selectedItem.category.categoryName}`
+                                    `/categories/sizes-available/${selectedItem.category.categoryName}`, {
+                                    headers: { Authorization: `Bearer ${token}` },
+                                  }
                                   );
 
                                   setAvailableSizes(
@@ -1736,11 +1737,10 @@ const Invoice = () => {
                         </td>
                         <td className="px-6 py-4 font-normal text-sm text-center">
                           <div
-                            className={`px-2 py-1 rounded-full ${
-                              item.status === "Final" || item.status === "final"
+                            className={`px-2 py-1 rounded-full ${item.status === "Final" || item.status === "final"
                                 ? "bg-green-200 text-green-700"
                                 : "bg-orange-300 text-white"
-                            }`}
+                              }`}
                           >
                             {item?.status}
                           </div>

@@ -197,7 +197,7 @@ const WareHouse = () => {
       fetchWareHouse();
     } catch (error) {
       console.error("❌ Error adding warehouse:", error);
-      toast.error("Error adding warehouse!");
+      toast.error(error.response.data.message || "Error adding warehouse!");
     } finally {
       setTimeout(() => setButtonLoading(false), 1200);
     }

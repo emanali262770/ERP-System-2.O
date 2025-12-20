@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import api from "../../Api/AxiosInstance";
 import Pagination from "../../components/Pagination";
+import { useAuth } from "../../context/AuthContext";
 
 const ManageCompanies = () => {
   // ----- State Hooks -----
@@ -47,7 +48,7 @@ const ManageCompanies = () => {
   const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editCompanyId, setEditCompanyId] = useState(null);
-
+  const { token } = useAuth();
   // Define mapping of countries to VAT numbers
 
   const countries = [
@@ -103,13 +104,6 @@ const ManageCompanies = () => {
     "Vatican City",
   ];
 
-  const countryVatMap = {
-    Pakistan: "PK123456789",
-    USA: "US987654321",
-    UK: "UK567890123",
-    Canada: "CA345678901",
-    // add more countries as needed
-  };
 
   const [newCompany, setNewCompany] = useState({
     name: "",
@@ -159,7 +153,11 @@ const ManageCompanies = () => {
 
   const fetchCompanies = async () => {
     try {
-      const res = await api.get("/companies");
+      const res = await api.get("/companies",{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (res.data.success) {
         const formatted = res.data.data.map((item, index) => ({
@@ -239,13 +237,13 @@ const ManageCompanies = () => {
       // ⭐ UPDATE MODE
       if (isEditMode && editCompanyId) {
         res = await api.put(`/companies/${editCompanyId}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { Authorization: `Bearer ${token}` ,"Content-Type": "multipart/form-data" },
         });
       }
       // ⭐ ADD MODE
       else {
         res = await api.post("/companies", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {  Authorization: `Bearer ${token}`,"Content-Type": "multipart/form-data" },
         });
       }
 
@@ -293,7 +291,11 @@ const ManageCompanies = () => {
         return;
       }
 
-      const res = await api.get(`/companies/${company._id || company.id}`);
+      const res = await api.get(`/companies/${company._id || company.id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.data.success) {
         toast.error("Failed to load company details");
@@ -337,7 +339,11 @@ const ManageCompanies = () => {
       setSaving(true);
       toast.loading("Deleting company...");
 
-      const res = await api.delete(`/companies/${id}`);
+      const res = await api.delete(`/companies/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       toast.dismiss();
 
