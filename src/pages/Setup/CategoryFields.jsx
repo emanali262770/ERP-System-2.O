@@ -53,6 +53,7 @@ const CategoryPage = () => {
     name: "",
     description: "",
     status: "Active",
+    sizes: [],
   });
   const [summary, setSummary] = useState({
     totalCategories: 0,
@@ -62,12 +63,17 @@ const CategoryPage = () => {
 
   // Handle view
   const handleView = async (categoryId) => {
+    const token = localStorage.getItem("token");
     // Open modal immediately
     setViewCategory(null); // reset previous data
     setIsViewOpen(true);
 
     try {
-      const response = await api.get(`/categories/${categoryId}`);
+      const response = await api.get(`/categories/${categoryId}`,{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       if (response.data.success && response.data.data) {
         const item = response.data.data;
         setViewCategory({
@@ -157,15 +163,25 @@ const CategoryPage = () => {
       name: "",
       description: "",
       status: "Active",
+      sizes: [],
     });
     setEditingCategory(null);
   };
 
   // 🟢 Save New Category
   const handleSaveCategory = async () => {
+     if (!newCategory.name?.trim()) {
+    toast.error("Enter Category Name");
+    return;
+  }
+
+  if (!Array.isArray(newCategory.sizes) || newCategory.sizes.length === 0) {
+    toast.error("Enter at least one Size");
+    return;
+  }
     try {
       setSaving(true); // show spinner immediately
-
+    
       const formData = new FormData();
       formData.append("categoryName", newCategory.name);
       formData.append("description", newCategory.description);
@@ -177,10 +193,9 @@ const CategoryPage = () => {
       }
 
       // 🟢 ADD SIZES EXACTLY LIKE POSTMAN
-      if (newCategory.sizes?.length > 0) {
+    
         const sizeString = newCategory.sizes.map((s) => s.name).join(", ");
         formData.append("sizes", sizeString); // NOW MATCHES POSTMAN
-      }
 
       // Get token
       const token = localStorage.getItem("token");
@@ -397,7 +412,7 @@ const CategoryPage = () => {
                   {/* Category Name */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      Category Name
+                      Category Name <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       placeholder="e.g., Electronics"
@@ -431,7 +446,7 @@ const CategoryPage = () => {
                     <div className="flex gap-2 items-end">
                       {/* Size */}
                       <div className="flex-1">
-                        <Label>Size</Label>
+                        <Label>Size <span className="text-red-500">*</span></Label>
                         <Input
                           value={sizeInput.name}
                           onChange={(e) =>

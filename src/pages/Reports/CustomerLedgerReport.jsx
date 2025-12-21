@@ -23,6 +23,7 @@ const CustomerLedgerReport = () => {
   const [ledgerData, setLedgerData] = useState([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const token = localStorage.getItem("token");
   const handleExportPDF = () => {
     toast.success("Exporting report as PDF...");
   };
@@ -37,7 +38,11 @@ const CustomerLedgerReport = () => {
     try {
       setCustomerLoading(true);
 
-      const res = await api.get("/customers");
+      const res = await api.get("/customers",{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       console.log("Res", res.data);
 
       if (res.data?.success && Array.isArray(res.data.data)) {
@@ -76,7 +81,11 @@ const CustomerLedgerReport = () => {
         : `/reports/ledger/customer${queryString}`;
 
       setTimeout(async () => {
-        const res = await api.get(url);
+        const res = await api.get(url,{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         console.log("Ledger API Response", res.data);
 
         if (res.data?.success && Array.isArray(res.data.data)) {
@@ -128,7 +137,7 @@ const CustomerLedgerReport = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+          <h1 className="text-3xl font-bold">Reports & Analytic</h1>
           <p className="text-muted-foreground">
             Generate and export business reports
           </p>

@@ -50,6 +50,7 @@ const SupplierLedgerReports = () => {
   const [ledgerData, setLedgerData] = useState([]);         // Store ledger data
   const [ledgerLoading, setLedgerLoading] = useState(false); // Loading state
   const [selectedSupplier, setSelectedSupplier] = useState(""); // Optional for filtering
+  const token = localStorage.getItem("token");
   const handleExportPDF = () => {
     toast.success("Exporting report as PDF...");
   };
@@ -62,7 +63,11 @@ const SupplierLedgerReports = () => {
   const fetchSuppliers = async () => {
     try {
       setSupplierLoading(true);
-      const res = await api.get("/suppliers");
+      const res = await api.get("/suppliers",{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       if (res.data?.success && Array.isArray(res.data.data)) {
         setSuppliers(res.data.data);
       } else {
@@ -96,7 +101,11 @@ const SupplierLedgerReports = () => {
         ? `/reports/ledger/supplier/${supplierId}${queryString}`
         : `/reports/ledger/supplier${queryString}`;
 
-      const res = await api.get(url);
+      const res = await api.get(url,{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       if (res.data?.success && Array.isArray(res.data.data)) {
         setLedgerData(res.data.data);
       } else {
